@@ -9,14 +9,10 @@ namespace HLView
     public class VeldridControl : Control, IRenderTarget
     {
         private static readonly IntPtr HInstance = Process.GetCurrentProcess().Handle;
-        private Camera _camera;
 
         public Swapchain Swapchain { get; }
 
-        public ICamera Camera
-        {
-            get => _camera;
-        }
+        public ICamera Camera { get; }
 
         public VeldridControl(GraphicsDevice graphics, GraphicsDeviceOptions options)
         {
@@ -28,11 +24,15 @@ namespace HLView
             var hWnd = Handle; // Will call CreateHandle internally
             var hInstance = HInstance;
 
+            uint w = (uint) Width, h = (uint) Height;
+            if (w <= 0) w = 1;
+            if (h <= 0) h = 1;
+
             var source = SwapchainSource.CreateWin32(hWnd, hInstance);
-            var desc = new SwapchainDescription(source, (uint)Width, (uint)Height, options.SwapchainDepthFormat, options.SyncToVerticalBlank);
+            var desc = new SwapchainDescription(source, w, h, options.SwapchainDepthFormat, options.SyncToVerticalBlank);
             Swapchain = graphics.ResourceFactory.CreateSwapchain(desc);
 
-            _camera = new Camera(Width, Height);
+            Camera = new PerspectiveCamera(Width, Height);
         }
 
         protected override bool IsInputKey(Keys keyData)

@@ -6,7 +6,7 @@ namespace HLView.Graphics
 {
     public class Camera : ICamera
     {
-        private const float MoveSpeed = 0.00001f;
+        private const float MoveSpeed = 0.01f;
 
         private float _yaw;
         private float _pitch;
@@ -30,7 +30,7 @@ namespace HLView.Graphics
         }
 
         public Vector3 LookDirection { get; private set; } = Vector3.UnitZ;
-        public float FarDistance { get; } = 1000f;
+        public float FarDistance { get; } = 10000f;
         public float FieldOfView { get; } = 1f;
         public float NearDistance { get; } = 1f;
         public float AspectRatio => _windowWidth / _windowHeight;

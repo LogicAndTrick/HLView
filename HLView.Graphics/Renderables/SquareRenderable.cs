@@ -16,10 +16,10 @@ namespace HLView.Graphics.Renderables
 
             var verts = new[]
             {
-                new Vertex { Position = new Vector3(min, max, max), Normal = Vector3.UnitZ, Texture = Vector2.Zero },
-                new Vertex { Position = new Vector3(max, max, max), Normal = Vector3.UnitZ, Texture = Vector2.Zero },
-                new Vertex { Position = new Vector3(max, min, max), Normal = Vector3.UnitZ, Texture = Vector2.Zero },
-                new Vertex { Position = new Vector3(min, min, max), Normal = Vector3.UnitZ, Texture = Vector2.Zero },
+                new Vertex { Position = new Vector3(min, max, max), Normal = Vector3.UnitZ },
+                new Vertex { Position = new Vector3(max, max, max), Normal = Vector3.UnitZ },
+                new Vertex { Position = new Vector3(max, min, max), Normal = Vector3.UnitZ },
+                new Vertex { Position = new Vector3(min, min, max), Normal = Vector3.UnitZ },
             };
             ushort[] indices =
             {

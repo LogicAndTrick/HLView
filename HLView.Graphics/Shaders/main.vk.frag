@@ -2,7 +2,7 @@
 
 in vec4 fPosition;
 in vec4 fNormal;
-in vec2 fTexture;
+//in vec2 fTexture;
 
 out vec4 oFragmentColour;
 
@@ -12,5 +12,5 @@ void main()
 {
     //vec4 fragmentColor = texture(uTexture, fTexture);
     //oFragmentColour = fragmentColor;
-    oFragmentColour = vec4(1, 0, 0, 1);
+    oFragmentColour = fNormal;
 }

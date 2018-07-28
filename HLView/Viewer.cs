@@ -3,10 +3,12 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
 using System.Drawing;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using HLView.Formats.Bsp;
 using HLView.Graphics;
 using HLView.Graphics.Renderables;
 using Veldrid;
@@ -31,9 +33,10 @@ namespace HLView
             {
                 HasMainSwapchain = false,
                 ResourceBindingModel = ResourceBindingModel.Improved,
+                SwapchainDepthFormat = PixelFormat.R32_Float,
             };
-            //_graphicsDevice = GraphicsDevice.CreateVulkan(options);
-            _graphicsDevice = GraphicsDevice.CreateD3D11(options);
+            _graphicsDevice = GraphicsDevice.CreateVulkan(options);
+            //_graphicsDevice = GraphicsDevice.CreateD3D11(options);
             _view = new VeldridControl(_graphicsDevice, options)
             {
                 Dock = DockStyle.Fill
@@ -46,6 +49,12 @@ namespace HLView
             _scene = new Scene(_graphicsDevice);
 
             _scene.AddRenderable(new SquareRenderable());
+
+            var file = @"F:\Steam\SteamApps\common\Half-Life\valve\maps\verc_18.bsp";
+            //file = @"F:\Steam\SteamApps\common\Half-Life\valve\maps\c0a0.bsp";
+            BspFile bsp;
+            using (var stream = File.OpenRead(file)) bsp = new BspFile(stream);
+            _scene.AddRenderable(new BspRenderable(bsp));
 
             _sc.Scene = _scene;
             _sc.Start();

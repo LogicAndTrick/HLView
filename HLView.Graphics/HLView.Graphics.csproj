@@ -209,9 +209,12 @@
     <Compile Include="IRenderTarget.cs" />
     <Compile Include="IUpdateable.cs" />
     <Compile Include="KeyboardState.cs" />
+    <Compile Include="PerspectiveCamera.cs" />
     <Compile Include="Primitives\UniformProjection.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="IRenderable.cs" />
+    <Compile Include="Renderables\BspFaceGroupRenderable.cs" />
+    <Compile Include="Renderables\BspRenderable.cs" />
     <Compile Include="Renderables\SquareRenderable.cs" />
     <Compile Include="ResourceCache.cs" />
     <Compile Include="Scene.cs" />

@@ -57,8 +57,8 @@ namespace HLView.Graphics
         {
             var vertexLayout = new VertexLayoutDescription(
                 new VertexElementDescription("vPosition", VertexElementSemantic.Position, VertexElementFormat.Float3),
-                new VertexElementDescription("vNormal", VertexElementSemantic.Normal, VertexElementFormat.Float3),
-                new VertexElementDescription("vTexture", VertexElementSemantic.TextureCoordinate, VertexElementFormat.Float2)
+                new VertexElementDescription("vNormal", VertexElementSemantic.Normal, VertexElementFormat.Float3)//,
+                //new VertexElementDescription("vTexture", VertexElementSemantic.TextureCoordinate, VertexElementFormat.Float2)
             );
 
             var (vertex, fragment) = ResourceCache.GetShaders(_graphicsDevice, _graphicsDevice.ResourceFactory, "main");
@@ -77,7 +77,7 @@ namespace HLView.Graphics
             var pDesc = new GraphicsPipelineDescription
             {
                 BlendState = BlendStateDescription.SingleOverrideBlend,
-                DepthStencilState = new DepthStencilStateDescription(true, true, ComparisonKind.LessEqual),
+                DepthStencilState = DepthStencilStateDescription.DepthOnlyLessEqual,
                 RasterizerState = new RasterizerStateDescription(FaceCullMode.Back, PolygonFillMode.Solid, FrontFace.Clockwise, true, false),
                 PrimitiveTopology = PrimitiveTopology.TriangleList,
                 ResourceLayouts = new[] { _projectionLayout, _textureLayout },
@@ -85,7 +85,7 @@ namespace HLView.Graphics
                 Outputs = new OutputDescription
                 {
                     ColorAttachments = new[] { new OutputAttachmentDescription(PixelFormat.B8_G8_R8_A8_UNorm) },
-                    DepthAttachment = null,
+                    DepthAttachment = new OutputAttachmentDescription(PixelFormat.R32_Float),
                     SampleCount = TextureSampleCount.Count1
                 }
             };
@@ -228,6 +228,7 @@ namespace HLView.Graphics
 
                 _commandList.Begin();
                 _commandList.SetFramebuffer(Target.Swapchain.Framebuffer);
+                _commandList.ClearDepthStencil(1);
                 _commandList.ClearColorTarget(0, RgbaFloat.Black);
                 _commandList.SetPipeline(_self._pipeline);
                 _commandList.SetGraphicsResourceSet(0, _projectionResourceSet);

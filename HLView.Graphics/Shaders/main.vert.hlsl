@@ -2,14 +2,14 @@ struct VertexIn
 {
     float3 vPosition : POSITION0;
     float3 vNormal : NORMAL0;
-    float2 vTexture : TEXCOORD0;
+    //float2 vTexture : TEXCOORD0;
 };
 
 struct FragmentIn
 {
     float4 fPosition : SV_Position;
     float4 fNormal : NORMAL0;
-    float2 fTexture : TEXCOORD0;
+    //float2 fTexture : TEXCOORD0;
 };
 
 cbuffer Projection
@@ -35,7 +35,7 @@ FragmentIn main(VertexIn input)
 
     output.fPosition = viewportPos;
     output.fNormal = float4(input.vNormal, 1);
-    output.fTexture = input.vTexture;
+    //output.fTexture = input.vTexture;
 
     return output;
 }

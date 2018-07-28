@@ -8,6 +8,6 @@ namespace HLView.Graphics.Primitives
     {
         public Vector3 Position;
         public Vector3 Normal;
-        //public Vector2 Texture;
+        public Vector2 Texture;
     }
 }

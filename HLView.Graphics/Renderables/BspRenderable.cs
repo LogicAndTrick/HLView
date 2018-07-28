@@ -3,6 +3,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using HLView.Formats.Bsp;
+using HLView.Formats.Environment;
 using Veldrid;
 
 namespace HLView.Graphics.Renderables
@@ -10,16 +11,18 @@ namespace HLView.Graphics.Renderables
     public class BspRenderable : IRenderable
     {
         private readonly BspFile _bsp;
+        private readonly Environment _env;
         private readonly List<IRenderable> _children;
 
-        public BspRenderable(BspFile bsp)
+        public BspRenderable(BspFile bsp, Environment env)
         {
             _bsp = bsp;
+            _env = env;
             _children = new List<IRenderable>();
 
             foreach (var group in _bsp.Faces.GroupBy(x => _bsp.TextureInfos[x.TextureInfo].MipTexture))
             {
-                _children.Add(new BspFaceGroupRenderable(_bsp, group.Key, group));
+                _children.Add(new BspFaceGroupRenderable(_bsp, _env, group.Key, group));
             }
         }
 
@@ -31,11 +34,11 @@ namespace HLView.Graphics.Renderables
             }
         }
 
-        public void CreateResources(GraphicsDevice gd)
+        public void CreateResources(GraphicsDevice gd, SceneContext sc)
         {
             foreach (var child in _children)
             {
-                child.CreateResources(gd);
+                child.CreateResources(gd, sc);
             }
         }
 

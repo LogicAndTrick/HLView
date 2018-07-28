@@ -223,7 +223,6 @@ namespace HLView.Graphics
             }
             var normal = Vector3.Cross(temp, Vector3.UnitZ);
             return Vector3.Normalize(normal);
-            return normal;
         }
     }
 }

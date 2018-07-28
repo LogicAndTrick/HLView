@@ -1,19 +1,18 @@
-#version 330 core
+#version 420
 
 layout(location = 0) in vec3 vPosition;
 layout(location = 1) in vec3 vNormal;
-//layout(location = 2) in vec2 vTexture;
+layout(location = 2) in vec2 vTexture;
 
 out vec4 fPosition;
 out vec4 fNormal;
-//out vec2 fTexture;
+out vec2 fTexture;
 
-uniform Projection {
+layout(set = 0, binding = 0) uniform Projection {
     mat4 uModel;
     mat4 uView;
     mat4 uProjection;
 };
-
 
 void main()
 {
@@ -26,7 +25,7 @@ void main()
     
 	fPosition = position;
     fNormal = normal;
-//    fTexture = vTexture;
+    fTexture = vTexture;
     
 	gl_Position = viewportPos;
     gl_Position.y = -gl_Position.y; // Correct for Vulkan clip coordinates

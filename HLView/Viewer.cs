@@ -51,10 +51,10 @@ namespace HLView
             _scene.AddRenderable(new SquareRenderable());
 
             var file = @"F:\Steam\SteamApps\common\Half-Life\valve\maps\verc_18.bsp";
-            //file = @"F:\Steam\SteamApps\common\Half-Life\valve\maps\c0a0.bsp";
             BspFile bsp;
             using (var stream = File.OpenRead(file)) bsp = new BspFile(stream);
-            _scene.AddRenderable(new BspRenderable(bsp));
+            var env = HLView.Formats.Environment.Environment.FromFile(file);
+            _scene.AddRenderable(new BspRenderable(bsp, env));
 
             _sc.Scene = _scene;
             _sc.Start();

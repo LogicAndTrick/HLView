@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Text;
 
 namespace HLView.Formats.Wad
 {
@@ -8,13 +9,13 @@ namespace HLView.Formats.Wad
     {
         public Header Header { get; set; }
         public List<Lump> Lumps { get; set; }
-        public List<Texture> Textures { get; set; }
+        public Dictionary<string, Texture> Textures { get; set; }
 
         public WadFile(Stream stream)
         {
             Lumps = new List<Lump>();
-            Textures = new List<Texture>();
-            using (var br = new BinaryReader(stream)) Read(br);
+            Textures = new Dictionary<string, Texture>(StringComparer.InvariantCultureIgnoreCase);
+            using (var br = new BinaryReader(stream, Encoding.ASCII)) Read(br);
         }
 
         private void Read(BinaryReader br)
@@ -74,7 +75,8 @@ namespace HLView.Formats.Wad
                     default:
                         continue;
                 }
-                Textures.Add(texture);
+
+                Textures[texture.Name] = texture;
             }
         }
 

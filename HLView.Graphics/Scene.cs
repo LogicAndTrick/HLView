@@ -14,6 +14,7 @@ namespace HLView.Graphics
     {
         private readonly GraphicsDevice _graphicsDevice;
         private readonly List<IRenderable> _renderables;
+        private readonly List<IRenderable> _newRenderables;
         private readonly List<IUpdateable> _updateables;
         
         public Scene(GraphicsDevice graphicsDevice)
@@ -21,12 +22,13 @@ namespace HLView.Graphics
             _graphicsDevice = graphicsDevice;
             _updateables = new List<IUpdateable>();
             _renderables = new List<IRenderable>();
+            _newRenderables = new List<IRenderable>();
         }
 
         public void AddRenderable(IRenderable renderable)
         {
             _renderables.Add(renderable);
-            renderable.CreateResources(_graphicsDevice);
+            _newRenderables.Add(renderable);
         }
 
         public void AddUpdateable(IUpdateable updateable)
@@ -42,6 +44,12 @@ namespace HLView.Graphics
 
         public void Render(GraphicsDevice gd, CommandList cl, SceneContext sc)
         {
+            foreach (var r in _newRenderables)
+            {
+                r.CreateResources(_graphicsDevice, sc);
+            }
+            _newRenderables.Clear();
+
             foreach (var renderable in _renderables)
             {
                 renderable.Render(gd, cl, sc);

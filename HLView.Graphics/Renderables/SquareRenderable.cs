@@ -9,7 +9,7 @@ namespace HLView.Graphics.Renderables
         private DeviceBuffer _vertexBuffer;
         private DeviceBuffer _indexBuffer;
 
-        public void CreateResources(GraphicsDevice gd)
+        public void CreateResources(GraphicsDevice gd, SceneContext sc)
         {
             var max = 0.75f;
             var min = -max;

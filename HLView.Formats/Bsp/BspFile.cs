@@ -37,7 +37,7 @@ namespace HLView.Formats.Bsp
             Leaves = new List<Leaf>();
             Edges = new List<Edge>();
             Models = new List<Model>();
-            using (var br = new BinaryReader(stream)) Read(br);
+            using (var br = new BinaryReader(stream, Encoding.ASCII)) Read(br);
         }
 
         private void Read(BinaryReader br)

@@ -37,9 +37,10 @@ namespace HLView.Graphics
         private Scene _scene;
         private readonly object _lock = new object();
 
-        private Pipeline _pipeline;
-        private ResourceLayout _projectionLayout;
-        private ResourceLayout _textureLayout;
+        public Pipeline Pipeline { get; private set; }
+        public ResourceLayout ProjectionLayout { get; private set; }
+        public ResourceLayout TextureLayout { get; private set; }
+        public Sampler TextureSampler { get; set; }
 
         public SceneContext(GraphicsDevice graphicsDevice)
         {
@@ -57,22 +58,24 @@ namespace HLView.Graphics
         {
             var vertexLayout = new VertexLayoutDescription(
                 new VertexElementDescription("vPosition", VertexElementSemantic.Position, VertexElementFormat.Float3),
-                new VertexElementDescription("vNormal", VertexElementSemantic.Normal, VertexElementFormat.Float3)//,
-                //new VertexElementDescription("vTexture", VertexElementSemantic.TextureCoordinate, VertexElementFormat.Float2)
+                new VertexElementDescription("vNormal", VertexElementSemantic.Normal, VertexElementFormat.Float3),
+                new VertexElementDescription("vTexture", VertexElementSemantic.TextureCoordinate, VertexElementFormat.Float2)
             );
 
             var (vertex, fragment) = ResourceCache.GetShaders(_graphicsDevice, _graphicsDevice.ResourceFactory, "main");
             
-            _projectionLayout = _graphicsDevice.ResourceFactory.CreateResourceLayout(
+            ProjectionLayout = _graphicsDevice.ResourceFactory.CreateResourceLayout(
                 new ResourceLayoutDescription(
                     new ResourceLayoutElementDescription("Projection", ResourceKind.UniformBuffer, ShaderStages.Vertex)
                 )
             );
-            _textureLayout = _graphicsDevice.ResourceFactory.CreateResourceLayout(
+            TextureLayout = _graphicsDevice.ResourceFactory.CreateResourceLayout(
                 new ResourceLayoutDescription(
-                    new ResourceLayoutElementDescription("uTexture", ResourceKind.TextureReadOnly, ShaderStages.Fragment)
+                    new ResourceLayoutElementDescription("uTexture", ResourceKind.TextureReadOnly, ShaderStages.Fragment),
+                    new ResourceLayoutElementDescription("uSampler", ResourceKind.Sampler, ShaderStages.Fragment)
                 )
             );
+            TextureSampler = _graphicsDevice.ResourceFactory.CreateSampler(SamplerDescription.Aniso4x);
 
             var pDesc = new GraphicsPipelineDescription
             {
@@ -80,7 +83,7 @@ namespace HLView.Graphics
                 DepthStencilState = DepthStencilStateDescription.DepthOnlyLessEqual,
                 RasterizerState = new RasterizerStateDescription(FaceCullMode.Back, PolygonFillMode.Solid, FrontFace.Clockwise, true, false),
                 PrimitiveTopology = PrimitiveTopology.TriangleList,
-                ResourceLayouts = new[] { _projectionLayout, _textureLayout },
+                ResourceLayouts = new[] { ProjectionLayout, TextureLayout },
                 ShaderSet = new ShaderSetDescription(new[] { vertexLayout }, new[] { vertex, fragment }),
                 Outputs = new OutputDescription
                 {
@@ -90,7 +93,7 @@ namespace HLView.Graphics
                 }
             };
 
-            _pipeline = _graphicsDevice.ResourceFactory.CreateGraphicsPipeline(pDesc);
+            Pipeline = _graphicsDevice.ResourceFactory.CreateGraphicsPipeline(pDesc);
         }
 
         public void AddRenderTarget(IRenderTarget target)
@@ -172,9 +175,9 @@ namespace HLView.Graphics
         private class RenderTarget : IDisposable
         {
             private readonly SceneContext _self;
-            private CommandList _commandList;
-            private DeviceBuffer _projectionBuffer;
-            private ResourceSet _projectionResourceSet;
+            private readonly CommandList _commandList;
+            private readonly DeviceBuffer _projectionBuffer;
+            private readonly ResourceSet _projectionResourceSet;
             private bool _resizeRequired;
 
             public IRenderTarget Target { get; set; }
@@ -188,15 +191,13 @@ namespace HLView.Graphics
                 _resizeRequired = Target.Width != target.Swapchain.Framebuffer.Width || Target.Height != Target.Swapchain.Framebuffer.Height;
 
                 _commandList = _self._graphicsDevice.ResourceFactory.CreateCommandList();
-
-                
                 
                 _projectionBuffer = _self._graphicsDevice.ResourceFactory.CreateBuffer(
                     new BufferDescription((uint) Unsafe.SizeOf<UniformProjection>(), BufferUsage.UniformBuffer)
                 );
 
                 _projectionResourceSet = _self._graphicsDevice.ResourceFactory.CreateResourceSet(
-                    new ResourceSetDescription(_self._projectionLayout, _projectionBuffer)
+                    new ResourceSetDescription(_self.ProjectionLayout, _projectionBuffer)
                 );
             }
 
@@ -230,7 +231,7 @@ namespace HLView.Graphics
                 _commandList.SetFramebuffer(Target.Swapchain.Framebuffer);
                 _commandList.ClearDepthStencil(1);
                 _commandList.ClearColorTarget(0, RgbaFloat.Black);
-                _commandList.SetPipeline(_self._pipeline);
+                _commandList.SetPipeline(_self.Pipeline);
                 _commandList.SetGraphicsResourceSet(0, _projectionResourceSet);
 
                 scene?.Render(_self._graphicsDevice, _commandList, _self);

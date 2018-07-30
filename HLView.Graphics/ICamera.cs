@@ -7,6 +7,7 @@ namespace HLView.Graphics
     {
         Matrix4x4 View { get; }
         Matrix4x4 Projection { get; }
+        Vector3 Location { get; }
         void WindowResized(int width, int height);
     }
 }

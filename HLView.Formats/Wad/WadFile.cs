@@ -7,6 +7,7 @@ namespace HLView.Formats.Wad
 {
     public class WadFile
     {
+        public string Name { get; set; }
         public Header Header { get; set; }
         public List<Lump> Lumps { get; set; }
         public Dictionary<string, Texture> Textures { get; set; }

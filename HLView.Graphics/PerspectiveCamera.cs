@@ -41,6 +41,7 @@ namespace HLView.Graphics
 
         public Matrix4x4 View => GetCameraMatrix();
         public Matrix4x4 Projection => GetViewportMatrix(_width, _height);
+        public Vector3 Location => Position;
 
         public PerspectiveCamera(int width, int height)
         {

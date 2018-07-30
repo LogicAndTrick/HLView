@@ -203,7 +203,6 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Camera.cs" />
     <Compile Include="ICamera.cs" />
     <Compile Include="Class1.cs" />
     <Compile Include="IRenderTarget.cs" />
@@ -213,9 +212,11 @@
     <Compile Include="Primitives\UniformProjection.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="IRenderable.cs" />
+    <Compile Include="Renderables\BspEntityFaceGroupRenderable.cs" />
+    <Compile Include="Renderables\BspEntityRenderable.cs" />
     <Compile Include="Renderables\BspFaceGroupRenderable.cs" />
     <Compile Include="Renderables\BspRenderable.cs" />
-    <Compile Include="Renderables\SquareRenderable.cs" />
+    <Compile Include="Renderables\BspStaticFaceGroupRenderable.cs" />
     <Compile Include="ResourceCache.cs" />
     <Compile Include="Scene.cs" />
     <Compile Include="SceneContext.cs" />

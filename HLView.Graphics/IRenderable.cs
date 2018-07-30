@@ -6,8 +6,10 @@ namespace HLView.Graphics
 {
     public interface IRenderable : IUpdateable
     {
-        void CreateResources(GraphicsDevice gd, SceneContext sc);
-        void Render(GraphicsDevice gd, CommandList cl, SceneContext sc);
-        void DisposeResources(GraphicsDevice gd);
+        float DistanceFrom(Vector3 location);
+        void CreateResources(SceneContext sc);
+        void Render(SceneContext sc, CommandList cl);
+        void RenderAlpha(SceneContext sc, CommandList cl, Vector3 cameraLocation);
+        void DisposeResources(SceneContext sc);
     }
 }

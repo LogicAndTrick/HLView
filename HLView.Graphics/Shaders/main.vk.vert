@@ -2,11 +2,15 @@
 
 layout(location = 0) in vec3 vPosition;
 layout(location = 1) in vec3 vNormal;
-layout(location = 2) in vec2 vTexture;
+layout(location = 2) in vec4 vColour;
+layout(location = 3) in vec2 vTexture;
+layout(location = 4) in vec2 vLightmap;
 
-out vec4 fPosition;
-out vec4 fNormal;
-out vec2 fTexture;
+layout(location = 0) out vec4 fPosition;
+layout(location = 1) out vec4 fNormal;
+layout(location = 2) out vec4 fColour;
+layout(location = 3) out vec2 fTexture;
+layout(location = 4) out vec2 fLightmap;
 
 layout(set = 0, binding = 0) uniform Projection {
     mat4 uModel;
@@ -25,7 +29,9 @@ void main()
     
 	fPosition = position;
     fNormal = normal;
+    fColour = vColour;
     fTexture = vTexture;
+    fLightmap = vLightmap;
     
 	gl_Position = viewportPos;
     gl_Position.y = -gl_Position.y; // Correct for Vulkan clip coordinates

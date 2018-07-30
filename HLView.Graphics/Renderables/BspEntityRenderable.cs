@@ -1,60 +1,62 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using System.Numerics;
-using System.Text;
-using System.Threading.Tasks;
 using HLView.Formats.Bsp;
+using HLView.Graphics.Primitives;
 using Veldrid;
 using Environment = HLView.Formats.Environment.Environment;
+using Texture = HLView.Formats.Bsp.Texture;
 
 namespace HLView.Graphics.Renderables
 {
-    public class BspRenderable : IRenderable
+    public class BspEntityRenderable : IRenderable
     {
         private readonly BspFile _bsp;
         private readonly Environment _env;
+        private readonly EntityData _entity;
+        private readonly Model _model;
         private readonly List<IRenderable> _children;
+        private Vector4 _colour;
 
-        public BspRenderable(BspFile bsp, Environment env)
+        public BspEntityRenderable(BspFile bsp, Environment env, EntityData entity, Model model)
         {
             _bsp = bsp;
             _env = env;
+            _entity = entity;
+            _model = model;
             _children = new List<IRenderable>();
 
-            var worldspawn = _bsp.Entities.FirstOrDefault(x => x.ClassName == "worldspawn");
-            if (worldspawn != null)
-            {
-                var wads = worldspawn.Get("wad", "");
-                _env.LoadWads(wads.Split(';').Where(x => !String.IsNullOrWhiteSpace(x)).Select(Path.GetFileName));
-            }
+            _colour = GetColour();
 
-            // Collect the static faces in the BSP (no need for special entity treatment)
-            var staticFaces = new List<Face>();
-            var nodes = new Queue<Node>(_bsp.Nodes.Take(1));
-            while (nodes.Any())
+            var faces = _bsp.Faces.GetRange(_model.FirstFace, _model.NumFaces);
+            
+            foreach (var group in faces.GroupBy(x => _bsp.TextureInfos[x.TextureInfo].MipTexture))
             {
-                var node = nodes.Dequeue();
-                foreach (var child in node.Children)
+                _children.Add(new BspEntityFaceGroupRenderable(_bsp, _env, group.Key, group)
                 {
-                    if (child > 0) nodes.Enqueue(_bsp.Nodes[child]);
-                    for (var i = 0; i < node.NumFaces; i++) staticFaces.Add(_bsp.Faces[node.FirstFace + i]);
-                }
+                    Origin = _model.Origin,
+                    Colour = _colour
+                });
+            }
+        }
+
+        private Vector4 GetColour()
+        {
+            var mode = _entity.Get("rendermode", 0);
+            var alpha = _entity.Get("renderamt", 0) / 255f;
+            switch (mode)
+            {
+                case 1:
+                    return new Vector4(_entity.GetVector3("rendercolor", Vector3.One), alpha);
+                case 2:
+                case 3:
+                    return new Vector4(Vector3.One, alpha);
+                case 5:
+                    return new Vector4(Vector3.One, alpha); // Yeah, this is wrong. but whatever
             }
 
-            foreach (var group in staticFaces.GroupBy(x => _bsp.TextureInfos[x.TextureInfo].MipTexture))
-            {
-                _children.Add(new BspStaticFaceGroupRenderable(_bsp, _env, group.Key, group));
-            }
-
-            // Collect entity faces - these have special treatment
-            foreach (var ent in _bsp.Entities)
-            {
-                if (ent.Model <= 0) continue;
-                var model = _bsp.Models[ent.Model];
-                _children.Add(new BspEntityRenderable(_bsp, _env, ent, model));
-            }
+            return Vector4.One;
         }
 
         public void Update(long milliseconds)

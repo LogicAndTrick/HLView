@@ -35,8 +35,8 @@ namespace HLView
                 ResourceBindingModel = ResourceBindingModel.Improved,
                 SwapchainDepthFormat = PixelFormat.R32_Float,
             };
-            _graphicsDevice = GraphicsDevice.CreateVulkan(options);
-            //_graphicsDevice = GraphicsDevice.CreateD3D11(options);
+            //_graphicsDevice = GraphicsDevice.CreateVulkan(options);
+            _graphicsDevice = GraphicsDevice.CreateD3D11(options);
             _view = new VeldridControl(_graphicsDevice, options)
             {
                 Dock = DockStyle.Fill
@@ -48,9 +48,8 @@ namespace HLView
 
             _scene = new Scene(_graphicsDevice);
 
-            _scene.AddRenderable(new SquareRenderable());
-
             var file = @"F:\Steam\SteamApps\common\Half-Life\valve\maps\verc_18.bsp";
+            file = @"F:\Steam\SteamApps\common\Sven Co-op\svencoop\maps\last4.bsp";
             BspFile bsp;
             using (var stream = File.OpenRead(file)) bsp = new BspFile(stream);
             var env = HLView.Formats.Environment.Environment.FromFile(file);

@@ -16,7 +16,7 @@ namespace HLView.Graphics
 {
     public class SceneContext : IDisposable
     {
-        private readonly GraphicsDevice _graphicsDevice;
+        public GraphicsDevice Device { get; }
         public ResourceCache ResourceCache { get; }
 
         public Scene Scene
@@ -38,14 +38,11 @@ namespace HLView.Graphics
         private readonly object _lock = new object();
 
         public Pipeline Pipeline { get; private set; }
-        public ResourceLayout ProjectionLayout { get; private set; }
-        public ResourceLayout TextureLayout { get; private set; }
-        public Sampler TextureSampler { get; set; }
 
         public SceneContext(GraphicsDevice graphicsDevice)
         {
-            _graphicsDevice = graphicsDevice;
-            ResourceCache = new ResourceCache();
+            Device = graphicsDevice;
+            ResourceCache = new ResourceCache(this);
             _token = new CancellationTokenSource();
             _renderThread = new Thread(Loop);
             _renderTargets = new List<RenderTarget>();
@@ -59,31 +56,20 @@ namespace HLView.Graphics
             var vertexLayout = new VertexLayoutDescription(
                 new VertexElementDescription("vPosition", VertexElementSemantic.Position, VertexElementFormat.Float3),
                 new VertexElementDescription("vNormal", VertexElementSemantic.Normal, VertexElementFormat.Float3),
-                new VertexElementDescription("vTexture", VertexElementSemantic.TextureCoordinate, VertexElementFormat.Float2)
+                new VertexElementDescription("vColour", VertexElementSemantic.Color, VertexElementFormat.Float4),
+                new VertexElementDescription("vTexture", VertexElementSemantic.TextureCoordinate, VertexElementFormat.Float2),
+                new VertexElementDescription("vLightmap", VertexElementSemantic.TextureCoordinate, VertexElementFormat.Float2)
             );
 
-            var (vertex, fragment) = ResourceCache.GetShaders(_graphicsDevice, _graphicsDevice.ResourceFactory, "main");
-            
-            ProjectionLayout = _graphicsDevice.ResourceFactory.CreateResourceLayout(
-                new ResourceLayoutDescription(
-                    new ResourceLayoutElementDescription("Projection", ResourceKind.UniformBuffer, ShaderStages.Vertex)
-                )
-            );
-            TextureLayout = _graphicsDevice.ResourceFactory.CreateResourceLayout(
-                new ResourceLayoutDescription(
-                    new ResourceLayoutElementDescription("uTexture", ResourceKind.TextureReadOnly, ShaderStages.Fragment),
-                    new ResourceLayoutElementDescription("uSampler", ResourceKind.Sampler, ShaderStages.Fragment)
-                )
-            );
-            TextureSampler = _graphicsDevice.ResourceFactory.CreateSampler(SamplerDescription.Aniso4x);
+            var (vertex, fragment) = ResourceCache.GetShaders("main");
 
             var pDesc = new GraphicsPipelineDescription
             {
-                BlendState = BlendStateDescription.SingleOverrideBlend,
+                BlendState = BlendStateDescription.SingleAlphaBlend,
                 DepthStencilState = DepthStencilStateDescription.DepthOnlyLessEqual,
                 RasterizerState = new RasterizerStateDescription(FaceCullMode.Back, PolygonFillMode.Solid, FrontFace.Clockwise, true, false),
                 PrimitiveTopology = PrimitiveTopology.TriangleList,
-                ResourceLayouts = new[] { ProjectionLayout, TextureLayout },
+                ResourceLayouts = new[] { ResourceCache.ProjectionLayout, ResourceCache.TextureLayout },
                 ShaderSet = new ShaderSetDescription(new[] { vertexLayout }, new[] { vertex, fragment }),
                 Outputs = new OutputDescription
                 {
@@ -93,7 +79,7 @@ namespace HLView.Graphics
                 }
             };
 
-            Pipeline = _graphicsDevice.ResourceFactory.CreateGraphicsPipeline(pDesc);
+            Pipeline = ResourceCache.GetPipeline(ref pDesc);
         }
 
         public void AddRenderTarget(IRenderTarget target)
@@ -140,8 +126,7 @@ namespace HLView.Graphics
                     if (Scene == null) break;
 
                     var frame = _timer.ElapsedMilliseconds;
-
-                    // Update scene
+                    
                     Scene.Update(frame);
                     lock (_lock)
                     {
@@ -149,10 +134,7 @@ namespace HLView.Graphics
                         foreach (var rt in _renderTargets) rt.Render(Scene);
                     }
 
-                    _graphicsDevice.WaitForIdle();
-
-                    // Render scene
-                    // ??
+                    Device.WaitForIdle();
                 }
             }
             catch (ThreadInterruptedException)
@@ -170,6 +152,7 @@ namespace HLView.Graphics
             _token.Cancel();
             _renderThread.Join(100);
             _renderThread.Abort();
+            ResourceCache.Dispose();
         }
 
         private class RenderTarget : IDisposable
@@ -190,14 +173,14 @@ namespace HLView.Graphics
                 target.Resize += OnResize;
                 _resizeRequired = Target.Width != target.Swapchain.Framebuffer.Width || Target.Height != Target.Swapchain.Framebuffer.Height;
 
-                _commandList = _self._graphicsDevice.ResourceFactory.CreateCommandList();
+                _commandList = _self.Device.ResourceFactory.CreateCommandList();
                 
-                _projectionBuffer = _self._graphicsDevice.ResourceFactory.CreateBuffer(
+                _projectionBuffer = _self.Device.ResourceFactory.CreateBuffer(
                     new BufferDescription((uint) Unsafe.SizeOf<UniformProjection>(), BufferUsage.UniformBuffer)
                 );
 
-                _projectionResourceSet = _self._graphicsDevice.ResourceFactory.CreateResourceSet(
-                    new ResourceSetDescription(_self.ProjectionLayout, _projectionBuffer)
+                _projectionResourceSet = _self.ResourceCache.GetResourceSet(
+                    new ResourceSetDescription(_self.ResourceCache.ProjectionLayout, _projectionBuffer)
                 );
             }
 
@@ -215,12 +198,14 @@ namespace HLView.Graphics
             {
                 if (_resizeRequired)
                 {
-                    Target.Swapchain.Resize((uint) Target.Width, (uint) Target.Height);
-                    Target.Camera.WindowResized(Target.Width, Target.Height);
+                    var w = Math.Max(Target.Width, 1);
+                    var h = Math.Max(Target.Height, 1);
+                    Target.Swapchain.Resize((uint) w, (uint) h);
+                    Target.Camera.WindowResized(w, h);
                     _resizeRequired = false;
                 }
 
-                _self._graphicsDevice.UpdateBuffer(_projectionBuffer, 0, new UniformProjection
+                _self.Device.UpdateBuffer(_projectionBuffer, 0, new UniformProjection
                 {
                     Model = Matrix4x4.Identity,
                     View = Target.Camera.View,
@@ -234,17 +219,19 @@ namespace HLView.Graphics
                 _commandList.SetPipeline(_self.Pipeline);
                 _commandList.SetGraphicsResourceSet(0, _projectionResourceSet);
 
-                scene?.Render(_self._graphicsDevice, _commandList, _self);
+                scene?.Render(_commandList, _self);
+                scene?.RenderAlpha(_commandList, _self, Target.Camera.Location);
 
                 _commandList.End();
 
-                _self._graphicsDevice.SubmitCommands(_commandList);
-                _self._graphicsDevice.SwapBuffers(Target.Swapchain);
+                _self.Device.SubmitCommands(_commandList);
+                _self.Device.SwapBuffers(Target.Swapchain);
             }
 
             public void Dispose()
             {
                 Target.Resize -= OnResize;
+                _projectionBuffer.Dispose();
                 _commandList.Dispose();
             }
         }

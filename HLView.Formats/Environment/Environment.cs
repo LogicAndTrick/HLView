@@ -12,6 +12,7 @@ namespace HLView.Formats.Environment
         public string BaseFolder { get; set; }
         public string ModFolder { get; set; }
 
+        public HashSet<string> WadPaths { get; }
         public WadCollection Wads { get; }
 
         public Environment(string folder)
@@ -19,6 +20,8 @@ namespace HLView.Formats.Environment
             Name = "Unknown";
             BaseFolder = ModFolder = folder;
             Wads = new WadCollection();
+
+            WadPaths = new HashSet<string>(StringComparer.InvariantCultureIgnoreCase);
 
             var modFolder = new DirectoryInfo(ModFolder);
             if (!modFolder.Exists) return;
@@ -35,14 +38,28 @@ namespace HLView.Formats.Environment
             // Load wad files
             foreach (var wad in modFolder.GetFiles("*.wad"))
             {
-                using (var s = wad.OpenRead()) Wads.Add(new WadFile(s));
+                WadPaths.Add(wad.FullName);
+                //using (var s = wad.OpenRead()) Wads.Add(new WadFile(s));
             }
 
             if (gameFolder != null)
             {
                 foreach (var wad in gameFolder.GetFiles("*.wad"))
                 {
-                    using (var s = wad.OpenRead()) Wads.Add(new WadFile(s));
+                    WadPaths.Add(wad.FullName);
+                    //using (var s = wad.OpenRead()) Wads.Add(new WadFile(s));
+                }
+            }
+        }
+
+        public void LoadWads(IEnumerable<string> wads)
+        {
+            foreach (var wad in wads)
+            {
+                var file = WadPaths.FirstOrDefault(x => Path.GetFileName(x) == wad);
+                if (file != null)
+                {
+                    using (var s = File.OpenRead(file)) Wads.Add(new WadFile(s) { Name = file });
                 }
             }
         }

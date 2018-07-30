@@ -42,17 +42,25 @@ namespace HLView.Graphics
             foreach (var renderable in _renderables) renderable.Update(milliseconds);
         }
 
-        public void Render(GraphicsDevice gd, CommandList cl, SceneContext sc)
+        public void Render(CommandList cl, SceneContext sc)
         {
             foreach (var r in _newRenderables)
             {
-                r.CreateResources(_graphicsDevice, sc);
+                r.CreateResources(sc);
             }
             _newRenderables.Clear();
 
             foreach (var renderable in _renderables)
             {
-                renderable.Render(gd, cl, sc);
+                renderable.Render(sc, cl);
+            }
+        }
+
+        public void RenderAlpha(CommandList cl, SceneContext sc, Vector3 cameraLocation)
+        {
+            foreach (var renderable in _renderables)
+            {
+                renderable.RenderAlpha(sc, cl, cameraLocation);
             }
         }
 

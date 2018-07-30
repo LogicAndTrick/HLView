@@ -9,7 +9,8 @@ namespace HLView.Formats.Bsp
     public class BspFile
     {
         public Header Header { get; private set; }
-        public string Entities { get; private set; }
+        public List<EntityData> Entities { get; set; }
+        public string EntityBlock { get; private set; }
         public List<Plane> Planes { get; private set; }
         public List<Texture> Textures { get; private set; }
         public List<Vector3> Vertices { get; private set; }
@@ -37,6 +38,7 @@ namespace HLView.Formats.Bsp
             Leaves = new List<Leaf>();
             Edges = new List<Edge>();
             Models = new List<Model>();
+            Entities = new List<EntityData>();
             using (var br = new BinaryReader(stream, Encoding.ASCII)) Read(br);
         }
 
@@ -65,7 +67,7 @@ namespace HLView.Formats.Bsp
             // Entities
             var lump = Header.Lumps[Lump.Entities];
             br.BaseStream.Seek(lump.Offset, SeekOrigin.Begin);
-            Entities = Encoding.ASCII.GetString(br.ReadBytes(lump.Length));
+            EntityBlock = Encoding.ASCII.GetString(br.ReadBytes(lump.Length));
 
             // Planes
             lump = Header.Lumps[Lump.Planes];
@@ -247,6 +249,124 @@ namespace HLView.Formats.Bsp
                     NumFaces = br.ReadInt32()
                 };
                 Models.Add(model);
+            }
+
+            ParseEntities();
+        }
+
+        private void ParseEntities()
+        {
+            // Remove comments
+            var cleaned = new StringBuilder();
+            foreach (var line in EntityBlock.Split('\n'))
+            {
+                var l = line;
+                var idx = l.IndexOf("//", StringComparison.Ordinal);
+                if (idx >= 0) l = l.Substring(0, idx);
+                l = l.Trim();
+                cleaned.Append(l).Append('\n');
+            }
+
+            var data = cleaned.ToString();
+
+            EntityData cur = null;
+            int i;
+            string key = null;
+            for (i = 0; i < data.Length; i++)
+            {
+                var token = GetToken();
+                if (token == "{")
+                {
+                    // Start of new entity
+                    cur = new EntityData();
+                    Entities.Add(cur);
+                    key = null;
+                }
+                else if (token == "}")
+                {
+                    // End of entity
+                    cur = null;
+                    key = null;
+                }
+                else if (cur != null && key != null)
+                {
+                    // KeyValue value
+                    SetKeyValue(cur, key, token);
+                    key = null;
+                }
+                else if (cur != null)
+                {
+                    // KeyValue key
+                    key = token;
+                }
+                else if (token == null)
+                {
+                    // End of file
+                    break;
+                }
+                else
+                {
+                    // Invalid
+                }
+            }
+
+            string GetToken()
+            {
+                if (!ScanToNonWhitespace()) return null;
+
+                if (data[i] == '{' || data[i] == '}')
+                {
+                    // Start/end entity
+                    return data[i].ToString();
+                }
+
+                if (data[i] == '"')
+                {
+                    // Quoted string, find end quote
+                    var idx = data.IndexOf('"', i + 1);
+                    if (idx < 0) return null;
+                    var tok = data.Substring(i + 1, idx - i - 1);
+                    i = idx + 1;
+                    return tok;
+                }
+
+                if (data[i] > 32)
+                {
+                    // Not whitespace
+                    var s = "";
+                    while (data[i] > 32)
+                    {
+                        s += data[i++];
+                    }
+                    return s;
+                }
+
+                return null;
+            }
+
+            bool ScanToNonWhitespace()
+            {
+                while (i < data.Length)
+                {
+                    if (data[i] == ' ' || data[i] == '\n') i++;
+                    else return true;
+                }
+
+                return false;
+            }
+
+            void SetKeyValue(EntityData e, string k, string v)
+            {
+                e.KeyValues[k] = v;
+                switch (k)
+                {
+                    case "classname":
+                        e.ClassName = v;
+                        break;
+                    case "model":
+                        if (int.TryParse(v.Substring(1), out var m)) e.Model = m;
+                        break;
+                }
             }
         }
     }

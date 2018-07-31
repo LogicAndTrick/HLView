@@ -11,8 +11,7 @@ using HLView.Graphics.Primitives;
 using Veldrid;
 using Veldrid.Utilities;
 using Environment = HLView.Formats.Environment.Environment;
-using Texture = HLView.Formats.Bsp.Texture;
-using Version = System.Version;
+using Texture = HLView.Formats.Wad.Texture;
 
 namespace HLView.Graphics.Renderables
 {
@@ -36,6 +35,8 @@ namespace HLView.Graphics.Renderables
         private long _lastFrameMillis;
         private int _currentTextureIndex;
 
+        public int RenderPass => 10;
+
         protected BspFaceGroupRenderable(BspFile bsp, Environment environment, int mipTexture, IEnumerable<Face> faces)
         {
             Bsp = bsp;
@@ -46,8 +47,9 @@ namespace HLView.Graphics.Renderables
         }
         
         protected abstract Vector4 GetColour();
-        public abstract void Render(SceneContext sc, CommandList cl);
-        public abstract void RenderAlpha(SceneContext sc, CommandList cl, Vector3 cameraLocation);
+        public abstract void Render(SceneContext sc, CommandList cl, IRenderContext rc);
+        public abstract void RenderAlpha(SceneContext sc, CommandList cl, IRenderContext rc,
+            Vector3 cameraLocation);
 
         public float DistanceFrom(Vector3 location)
         {
@@ -68,8 +70,7 @@ namespace HLView.Graphics.Renderables
         {
             var textures = new List<Veldrid.Texture>();
 
-            var tex = Environment.Wads.Get(_texture.Name);
-            // todo load texture from bsp
+            var tex = _texture.NumMips > 1 ? _texture : Environment.Wads.Get(_texture.Name);
 
             _currentTextureIndex = 0;
             if (tex != null)
@@ -358,6 +359,8 @@ namespace HLView.Graphics.Renderables
 
         protected void RenderLists(SceneContext sc, CommandList cl)
         {
+            if (string.Equals(_texture.Name, "sky", StringComparison.InvariantCultureIgnoreCase)) return; // temp
+
             cl.SetVertexBuffer(0, _vertexBuffer);
             cl.SetIndexBuffer(_indexBuffer, IndexFormat.UInt32);
             cl.SetGraphicsResourceSet(1, _textureResources[_currentTextureIndex]);

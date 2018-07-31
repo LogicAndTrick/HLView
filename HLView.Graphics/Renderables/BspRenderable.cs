@@ -17,18 +17,25 @@ namespace HLView.Graphics.Renderables
         private readonly Environment _env;
         private readonly List<IRenderable> _children;
 
+        public int RenderPass => 1;
+
         public BspRenderable(BspFile bsp, Environment env)
         {
             _bsp = bsp;
             _env = env;
             _children = new List<IRenderable>();
 
+            var skybox = "desert";
             var worldspawn = _bsp.Entities.FirstOrDefault(x => x.ClassName == "worldspawn");
             if (worldspawn != null)
             {
                 var wads = worldspawn.Get("wad", "");
                 _env.LoadWads(wads.Split(';').Where(x => !String.IsNullOrWhiteSpace(x)).Select(Path.GetFileName));
+                skybox = worldspawn.Get("skyname", skybox);
             }
+
+            // Load the skybox
+            _children.Add(new SkyboxRenderable(_env, skybox));
 
             // Collect the static faces in the BSP (no need for special entity treatment)
             var staticFaces = new List<Face>();
@@ -79,19 +86,19 @@ namespace HLView.Graphics.Renderables
             }
         }
 
-        public void Render(SceneContext sc, CommandList cl)
+        public void Render(SceneContext sc, CommandList cl, IRenderContext rc)
         {
-            foreach (var child in _children)
+            foreach (var child in _children.OrderBy(x => x.RenderPass))
             {
-                child.Render(sc, cl);
+                child.Render(sc, cl, rc);
             }
         }
 
-        public void RenderAlpha(SceneContext sc, CommandList cl, Vector3 cameraLocation)
+        public void RenderAlpha(SceneContext sc, CommandList cl, IRenderContext rc, Vector3 cameraLocation)
         {
-            foreach (var child in _children.OrderByDescending(x => x.DistanceFrom(cameraLocation)))
+            foreach (var child in _children.OrderBy(x => x.RenderPass).ThenByDescending(x => x.DistanceFrom(cameraLocation)))
             {
-                child.RenderAlpha(sc, cl, cameraLocation);
+                child.RenderAlpha(sc, cl, rc, cameraLocation);
             }
         }
 

@@ -45,8 +45,8 @@ namespace HLView.Graphics
 
         public PerspectiveCamera(int width, int height)
         {
-            Position = Vector3.Zero;
-            Direction = Vector3.One;
+            Position = Vector3.UnitZ * 96;
+            Direction = Vector3.UnitY;
             FOV = 90;
             ClipDistance = 10000;
 

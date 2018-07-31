@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Numerics;
 using System.Text;
+using HLView.Formats.Wad;
 
 namespace HLView.Formats.Bsp
 {
@@ -92,16 +93,7 @@ namespace HLView.Formats.Bsp
             foreach (var offset in offsets)
             {
                 br.BaseStream.Seek(lump.Offset + offset, SeekOrigin.Begin);
-                var name = br.ReadChars(Texture.NameLength);
-                var len = Array.IndexOf(name, '\0');
-                var tex = new Texture
-                {
-                    Name = new string(name, 0, len < 0 ? name.Length : len),
-                    Width = br.ReadUInt32(),
-                    Height = br.ReadUInt32(),
-                    Offsets = new uint[Texture.MipLevels]
-                };
-                for (var i = 0; i < Texture.MipLevels; i++) tex.Offsets[i] = br.ReadUInt32();
+                var tex = Wad.WadFile.ReadMipTexture(br);
                 Textures.Add(tex);
             }
 

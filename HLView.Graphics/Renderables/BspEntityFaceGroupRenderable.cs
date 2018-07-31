@@ -4,7 +4,6 @@ using System.Numerics;
 using HLView.Formats.Bsp;
 using HLView.Formats.Environment;
 using Veldrid;
-using Texture = HLView.Formats.Bsp.Texture;
 
 namespace HLView.Graphics.Renderables
 {
@@ -21,12 +20,13 @@ namespace HLView.Graphics.Renderables
             return Colour;
         }
 
-        public override void Render(SceneContext sc, CommandList cl)
+        public override void Render(SceneContext sc, CommandList cl, IRenderContext rc)
         {
             //
         }
 
-        public override void RenderAlpha(SceneContext sc, CommandList cl, Vector3 cameraLocation)
+        public override void RenderAlpha(SceneContext sc, CommandList cl, IRenderContext rc,
+            Vector3 cameraLocation)
         {
             RenderLists(sc, cl);
         }

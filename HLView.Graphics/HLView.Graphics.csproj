@@ -45,6 +45,9 @@
     <Reference Include="Newtonsoft.Json, Version=9.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
       <HintPath>..\packages\Newtonsoft.Json.9.0.1\lib\net45\Newtonsoft.Json.dll</HintPath>
     </Reference>
+    <Reference Include="Pfim, Version=0.5.1.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\Pfim.0.5.1\lib\netstandard1.3\Pfim.dll</HintPath>
+    </Reference>
     <Reference Include="SharpDX, Version=4.0.1.0, Culture=neutral, PublicKeyToken=b4dcf0f35e5521f1, processorArchitecture=MSIL">
       <HintPath>..\packages\SharpDX.4.0.1\lib\net45\SharpDX.dll</HintPath>
     </Reference>
@@ -205,6 +208,7 @@
   <ItemGroup>
     <Compile Include="ICamera.cs" />
     <Compile Include="Class1.cs" />
+    <Compile Include="IRenderContext.cs" />
     <Compile Include="IRenderTarget.cs" />
     <Compile Include="IUpdateable.cs" />
     <Compile Include="KeyboardState.cs" />
@@ -217,6 +221,8 @@
     <Compile Include="Renderables\BspFaceGroupRenderable.cs" />
     <Compile Include="Renderables\BspRenderable.cs" />
     <Compile Include="Renderables\BspStaticFaceGroupRenderable.cs" />
+    <Compile Include="Renderables\SkyboxRenderable.cs" />
+    <Compile Include="RenderTarget.cs" />
     <Compile Include="ResourceCache.cs" />
     <Compile Include="Scene.cs" />
     <Compile Include="SceneContext.cs" />
@@ -225,7 +231,9 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="app.config" />
-    <None Include="packages.config" />
+    <None Include="packages.config">
+      <SubType>Designer</SubType>
+    </None>
     <None Include="Shaders\main.vk.frag" />
     <None Include="Shaders\main.vk.vert" />
   </ItemGroup>

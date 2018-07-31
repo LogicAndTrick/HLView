@@ -42,7 +42,7 @@ namespace HLView.Graphics
             foreach (var renderable in _renderables) renderable.Update(milliseconds);
         }
 
-        public void Render(CommandList cl, SceneContext sc)
+        public void Render(CommandList cl, SceneContext sc, IRenderContext rc)
         {
             foreach (var r in _newRenderables)
             {
@@ -50,17 +50,17 @@ namespace HLView.Graphics
             }
             _newRenderables.Clear();
 
-            foreach (var renderable in _renderables)
+            foreach (var renderable in _renderables.OrderBy(x => x.RenderPass))
             {
-                renderable.Render(sc, cl);
+                renderable.Render(sc, cl, rc);
             }
         }
 
-        public void RenderAlpha(CommandList cl, SceneContext sc, Vector3 cameraLocation)
+        public void RenderAlpha(CommandList cl, SceneContext sc, IRenderContext rc, Vector3 cameraLocation)
         {
             foreach (var renderable in _renderables)
             {
-                renderable.RenderAlpha(sc, cl, cameraLocation);
+                renderable.RenderAlpha(sc, cl, rc, cameraLocation);
             }
         }
 

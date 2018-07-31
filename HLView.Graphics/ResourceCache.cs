@@ -23,6 +23,7 @@ namespace HLView.Graphics
         private readonly Dictionary<ResourceSetDescription, ResourceSet> _resourceSets = new Dictionary<ResourceSetDescription, ResourceSet>();
 
         private Texture _pinkTex;
+        private Texture _whiteTex;
 
         public ResourceLayout ProjectionLayout { get; }
         public ResourceLayout TextureLayout { get; }
@@ -167,6 +168,18 @@ namespace HLView.Graphics
             return _pinkTex;
         }
 
+        public Texture GetWhiteTexture()
+        {
+            if (_whiteTex == null)
+            {
+                var white = RgbaByte.White;
+                _whiteTex = _factory.CreateTexture(TextureDescription.Texture2D(1, 1, 1, 1, PixelFormat.R8_G8_B8_A8_UNorm, TextureUsage.Sampled));
+                _device.UpdateTexture(_whiteTex, new byte[] { white.R, white.G, white.B, white.A }, 0, 0, 0, 1, 1, 1, 0, 0);
+            }
+
+            return _whiteTex;
+        }
+
         public ResourceSet GetResourceSet(ResourceSetDescription description)
         {
             if (!_resourceSets.TryGetValue(description, out var ret))
@@ -225,6 +238,8 @@ namespace HLView.Graphics
 
             _pinkTex?.Dispose();
             _pinkTex = null;
+            _whiteTex?.Dispose();
+            _whiteTex = null;
 
             foreach (var kvp in _resourceSets)
             {

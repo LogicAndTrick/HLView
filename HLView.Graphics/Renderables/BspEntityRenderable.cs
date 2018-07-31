@@ -6,7 +6,6 @@ using HLView.Formats.Bsp;
 using HLView.Graphics.Primitives;
 using Veldrid;
 using Environment = HLView.Formats.Environment.Environment;
-using Texture = HLView.Formats.Bsp.Texture;
 
 namespace HLView.Graphics.Renderables
 {
@@ -18,6 +17,8 @@ namespace HLView.Graphics.Renderables
         private readonly Model _model;
         private readonly List<IRenderable> _children;
         private Vector4 _colour;
+
+        public int RenderPass => 10;
 
         public BspEntityRenderable(BspFile bsp, Environment env, EntityData entity, Model model)
         {
@@ -81,19 +82,19 @@ namespace HLView.Graphics.Renderables
             }
         }
 
-        public void Render(SceneContext sc, CommandList cl)
+        public void Render(SceneContext sc, CommandList cl, IRenderContext rc)
         {
             foreach (var child in _children)
             {
-                child.Render(sc, cl);
+                child.Render(sc, cl, rc);
             }
         }
 
-        public void RenderAlpha(SceneContext sc, CommandList cl, Vector3 cameraLocation)
+        public void RenderAlpha(SceneContext sc, CommandList cl, IRenderContext rc, Vector3 cameraLocation)
         {
             foreach (var child in _children.OrderByDescending(x => x.DistanceFrom(cameraLocation)))
             {
-                child.RenderAlpha(sc, cl, cameraLocation);
+                child.RenderAlpha(sc, cl, rc, cameraLocation);
             }
         }
 

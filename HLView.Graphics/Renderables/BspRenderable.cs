@@ -45,8 +45,25 @@ namespace HLView.Graphics.Renderables
                 var node = nodes.Dequeue();
                 foreach (var child in node.Children)
                 {
-                    if (child > 0) nodes.Enqueue(_bsp.Nodes[child]);
-                    for (var i = 0; i < node.NumFaces; i++) staticFaces.Add(_bsp.Faces[node.FirstFace + i]);
+                    if (child >= 0)
+                    {
+                        nodes.Enqueue(_bsp.Nodes[child]);
+                    }
+                    else
+                    {
+                        var leaf = _bsp.Leaves[-1 - child];
+                        if (leaf.Contents == Contents.Sky)
+                        {
+                            continue;
+                        }
+                        for (var ms = 0; ms < leaf.NumMarkSurfaces; ms++)
+                        {
+                            var faceidx = _bsp.MarkSurfaces[ms + leaf.FirstMarkSurface];
+                            var face = _bsp.Faces[faceidx];
+                            if (face.Styles[0] != byte.MaxValue) staticFaces.Add(face);
+                        }
+
+                    }
                 }
             }
 

@@ -48,8 +48,7 @@ namespace HLView.Graphics.Renderables
         
         protected abstract Vector4 GetColour();
         public abstract void Render(SceneContext sc, CommandList cl, IRenderContext rc);
-        public abstract void RenderAlpha(SceneContext sc, CommandList cl, IRenderContext rc,
-            Vector3 cameraLocation);
+        public abstract void RenderAlpha(SceneContext sc, CommandList cl, IRenderContext rc, Vector3 cameraLocation);
 
         public float DistanceFrom(Vector3 location)
         {
@@ -70,7 +69,8 @@ namespace HLView.Graphics.Renderables
         {
             var textures = new List<Veldrid.Texture>();
 
-            var tex = _texture.NumMips > 1 ? _texture : Environment.Wads.Get(_texture.Name);
+            var inBsp = _texture.NumMips > 0;
+            var tex = _texture.NumMips > 0 ? _texture : Environment.Wads.Get(_texture.Name);
 
             _currentTextureIndex = 0;
             if (tex != null)
@@ -95,7 +95,7 @@ namespace HLView.Graphics.Renderables
                         {
                             var frame = "+" + i + name;
                             if (string.Equals(frame, _texture.Name, StringComparison.InvariantCultureIgnoreCase)) _currentTextureIndex = i - c;
-                            tex = Environment.Wads.Get(frame);
+                            tex = inBsp ? Bsp.GetTexture(frame) : Environment.Wads.Get(frame);
                             if (tex.HasValue) textures.Add(sc.ResourceCache.GetTexture2D(tex.Value));
                         }
                     }
@@ -112,6 +112,11 @@ namespace HLView.Graphics.Renderables
 
             var lightmapTexture = sc.ResourceCache.GetTexture2D(lightmap);
             var lightmapTextureView = sc.ResourceCache.GetTextureView(lightmapTexture);
+
+            if (!textures.Any())
+            {
+                textures.Add(sc.ResourceCache.GetPinkTexture());
+            }
 
             foreach (var t in textures)
             {
@@ -304,7 +309,7 @@ namespace HLView.Graphics.Renderables
                 var mapWidth = (int) Math.Ceiling(maxu / 16) - (int) Math.Floor(minu / 16) + 1;
                 var mapHeight = (int) Math.Ceiling(maxv / 16) - (int) Math.Floor(minv / 16) + 1;
 
-                if (face.LightmapOffset < 0)
+                if (face.LightmapOffset < 0 || face.LightmapOffset >= Bsp.Lightmap.Length || face.Styles[0] == byte.MaxValue)
                 {
                     // fullbright
                     points.ForEach(x => x.Lightmap = Vector2.Zero);
@@ -359,8 +364,6 @@ namespace HLView.Graphics.Renderables
 
         protected void RenderLists(SceneContext sc, CommandList cl)
         {
-            if (string.Equals(_texture.Name, "sky", StringComparison.InvariantCultureIgnoreCase)) return; // temp
-
             cl.SetVertexBuffer(0, _vertexBuffer);
             cl.SetIndexBuffer(_indexBuffer, IndexFormat.UInt32);
             cl.SetGraphicsResourceSet(1, _textureResources[_currentTextureIndex]);

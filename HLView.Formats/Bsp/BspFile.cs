@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Numerics;
 using System.Text;
 using HLView.Formats.Wad;
@@ -360,6 +361,16 @@ namespace HLView.Formats.Bsp
                         break;
                 }
             }
+        }
+
+        public Texture? GetTexture(string name)
+        {
+            foreach (var t in Textures.Where(x => x.NumMips > 0))
+            {
+                if (string.Equals(t.Name, name, StringComparison.InvariantCultureIgnoreCase)) return t;
+            }
+
+            return null;
         }
     }
 }

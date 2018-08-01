@@ -43,10 +43,11 @@ namespace HLView.Graphics
             );
         }
 
+        private static readonly string ShaderDir = Path.Combine(Path.GetDirectoryName(typeof(ShaderHelper).Assembly.Location), "Shaders");
+
         private static string GetPath(string path)
         {
-            // TODO
-            return Path.Combine(@"D:\Github\HLView\HLView.Graphics\Shaders", path);
+            return Path.Combine(ShaderDir, path);
         }
     }
 }

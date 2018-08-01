@@ -1,25 +1,18 @@
-﻿using System;
-using System.Collections.Concurrent;
-using System.Collections.Generic;
-using System.Diagnostics;
+﻿using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
-using System.Threading.Tasks;
 using Veldrid;
-using Veldrid.Utilities;
 
 namespace HLView.Graphics
 {
-    public class Scene : IDisposable
+    public class Scene
     {
-        private readonly GraphicsDevice _graphicsDevice;
         private readonly List<IRenderable> _renderables;
         private readonly List<IRenderable> _newRenderables;
         private readonly List<IUpdateable> _updateables;
         
-        public Scene(GraphicsDevice graphicsDevice)
+        public Scene()
         {
-            _graphicsDevice = graphicsDevice;
             _updateables = new List<IUpdateable>();
             _renderables = new List<IRenderable>();
             _newRenderables = new List<IRenderable>();
@@ -64,9 +57,9 @@ namespace HLView.Graphics
             }
         }
 
-        public void Dispose()
+        public void DisposeResources(SceneContext sc)
         {
-            _graphicsDevice?.Dispose();
+            foreach (var r in _renderables) r.DisposeResources(sc);
         }
     }
 }

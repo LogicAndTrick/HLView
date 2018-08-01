@@ -30,16 +30,47 @@ namespace HLView.Graphics.Renderables
 
             _colour = GetColour();
 
-            var faces = _bsp.Faces.GetRange(_model.FirstFace, _model.NumFaces);
-            
-            foreach (var group in faces.GroupBy(x => _bsp.TextureInfos[x.TextureInfo].MipTexture))
+            var origin = _model.Origin + entity.GetVector3("origin", Vector3.Zero);
+
+            var entityFaces = new List<Face>();
+            var nodes = new Queue<Node>();
+            nodes.Enqueue(bsp.Nodes[_model.HeadNodes[0]]);
+            while (nodes.Any())
+            {
+                var node = nodes.Dequeue();
+                foreach (var child in node.Children)
+                {
+                    if (child >= 0)
+                    {
+                        nodes.Enqueue(_bsp.Nodes[child]);
+                    }
+                    else
+                    {
+                        var leaf = _bsp.Leaves[-1 - child];
+                        if (leaf.Contents == Contents.Sky)
+                        {
+                            continue;
+                        }
+                        for (var ms = 0; ms < leaf.NumMarkSurfaces; ms++)
+                        {
+                            var faceidx = _bsp.MarkSurfaces[ms + leaf.FirstMarkSurface];
+                            var face = _bsp.Faces[faceidx];
+                            if (face.Styles[0] != byte.MaxValue) entityFaces.Add(face);
+                        }
+
+                    }
+                }
+            }
+
+            foreach (var group in entityFaces.GroupBy(x => _bsp.TextureInfos[x.TextureInfo].MipTexture))
             {
                 _children.Add(new BspEntityFaceGroupRenderable(_bsp, _env, group.Key, group)
                 {
-                    Origin = _model.Origin,
+                    Origin = origin,
                     Colour = _colour
                 });
             }
+
         }
 
         private Vector4 GetColour()

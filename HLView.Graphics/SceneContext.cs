@@ -118,11 +118,18 @@ namespace HLView.Graphics
             var token = (CancellationToken) o;
             try
             {
+                var lastFrame = _timer.ElapsedMilliseconds;
                 while (!token.IsCancellationRequested)
                 {
                     if (Scene == null) break;
 
                     var frame = _timer.ElapsedMilliseconds;
+                    var diff = (frame - lastFrame);
+                    if (diff < 16)
+                    {
+                        Thread.Sleep(1);
+                        continue;
+                    }
                     
                     Scene.Update(frame);
                     lock (_lock)
@@ -146,6 +153,7 @@ namespace HLView.Graphics
 
         public void Dispose()
         {
+            _scene.DisposeResources(this);
             _token.Cancel();
             _renderThread.Join(100);
             _renderThread.Abort();

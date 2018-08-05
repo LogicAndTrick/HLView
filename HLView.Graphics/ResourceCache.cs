@@ -111,6 +111,7 @@ namespace HLView.Graphics
             var name = tex.Name;
             if (!_textures.TryGetValue(name, out Texture tt))
             {
+                // todo goldsource actually doesn't even use wad mips, it generates its own
                 tt = _device.ResourceFactory.CreateTexture(TextureDescription.Texture2D(tex.Width, tex.Height, 4, 1, PixelFormat.R8_G8_B8_A8_UNorm, TextureUsage.Sampled));
                 uint w = tex.Width, h = tex.Height;
                 for (uint i = 0; i < tex.NumMips; i++)

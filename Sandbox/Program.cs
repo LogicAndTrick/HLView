@@ -1,8 +1,14 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Drawing;
+using System.Drawing.Imaging;
 using System.IO;
+using System.Linq;
 using System.Runtime.InteropServices;
+using System.Text;
+using System.Threading.Tasks;
 using HLView.Formats.Bsp;
-using HLView.Formats.Wad;
+using HLView.Formats.Mdl;
 
 namespace Sandbox
 {
@@ -10,19 +16,10 @@ namespace Sandbox
     {
         static void Main(string[] args)
         {
-            var file = @"F:\Steam\SteamApps\common\Half-Life\valve\maps\verc_18.bsp";
-            file = @"F:\Steam\SteamApps\common\Half-Life\valve\maps\aaa.bsp";
+            var file = @"F:\Steam\SteamApps\common\Half-Life\valve\models\hgrunt.mdl";
             using (var stream = File.OpenRead(file))
             {
-                var bsp = new BspFile(stream);
-                var header = bsp.Header;
-            }
-
-            file = @"F:\Steam\SteamApps\common\Half-Life\valve\halflife.wad";
-            using (var stream = File.OpenRead(file))
-            {
-                var wad = new WadFile(stream);
-                var header = wad.Header;
+                var mdl = new MdlFile(stream);
             }
         }
     }

@@ -11,6 +11,7 @@ using HLView.Graphics.Primitives;
 using Veldrid;
 using Veldrid.Utilities;
 using Environment = HLView.Formats.Environment.Environment;
+using PixelFormat = Veldrid.PixelFormat;
 using Texture = HLView.Formats.Wad.Texture;
 
 namespace HLView.Graphics.Renderables
@@ -19,6 +20,8 @@ namespace HLView.Graphics.Renderables
     {
         protected BspFile Bsp { get; }
         protected Environment Environment { get; }
+
+        private Pipeline _pipeline;
 
         private BoundingBox _bounding;
         private List<ResourceSet> _textureResources;
@@ -35,7 +38,8 @@ namespace HLView.Graphics.Renderables
         private long _lastFrameMillis;
         private int _currentTextureIndex;
 
-        public int RenderPass => 10;
+        public int Order => 10;
+        public string Pipeline => "Lightmapped";
 
         protected BspFaceGroupRenderable(BspFile bsp, Environment environment, int mipTexture, IEnumerable<Face> faces)
         {
@@ -242,8 +246,41 @@ namespace HLView.Graphics.Renderables
             }
         }
 
+        private void InitialisePipeline(SceneContext sc)
+        {
+            var vertexLayout = new VertexLayoutDescription(
+                new VertexElementDescription("vPosition", VertexElementSemantic.Position, VertexElementFormat.Float3),
+                new VertexElementDescription("vNormal", VertexElementSemantic.Normal, VertexElementFormat.Float3),
+                new VertexElementDescription("vColour", VertexElementSemantic.Color, VertexElementFormat.Float4),
+                new VertexElementDescription("vTexture", VertexElementSemantic.TextureCoordinate, VertexElementFormat.Float2),
+                new VertexElementDescription("vLightmap", VertexElementSemantic.TextureCoordinate, VertexElementFormat.Float2)
+            );
+
+            var (vertex, fragment) = sc.ResourceCache.GetShaders("main");
+
+            var pDesc = new GraphicsPipelineDescription
+            {
+                BlendState = BlendStateDescription.SingleAlphaBlend,
+                DepthStencilState = DepthStencilStateDescription.DepthOnlyLessEqual,
+                RasterizerState = new RasterizerStateDescription(FaceCullMode.Back, PolygonFillMode.Solid, FrontFace.Clockwise, true, false),
+                PrimitiveTopology = PrimitiveTopology.TriangleList,
+                ResourceLayouts = new[] { sc.ResourceCache.ProjectionLayout, sc.ResourceCache.TextureLayout },
+                ShaderSet = new ShaderSetDescription(new[] { vertexLayout }, new[] { vertex, fragment }),
+                Outputs = new OutputDescription
+                {
+                    ColorAttachments = new[] { new OutputAttachmentDescription(PixelFormat.B8_G8_R8_A8_UNorm) },
+                    DepthAttachment = new OutputAttachmentDescription(PixelFormat.R32_Float),
+                    SampleCount = TextureSampleCount.Count1
+                }
+            };
+
+            _pipeline = sc.ResourceCache.GetPipeline(ref pDesc);
+        }
+
         public void CreateResources(SceneContext sc)
         {
+            InitialisePipeline(sc);
+
             var lightmap = new LightmapBuilder();
             
             // Lazy coding, use a vertex class so I don't have to worry about pass-by-value
@@ -364,6 +401,7 @@ namespace HLView.Graphics.Renderables
 
         protected void RenderLists(SceneContext sc, CommandList cl)
         {
+            cl.SetPipeline(_pipeline);
             cl.SetVertexBuffer(0, _vertexBuffer);
             cl.SetIndexBuffer(_indexBuffer, IndexFormat.UInt32);
             cl.SetGraphicsResourceSet(1, _textureResources[_currentTextureIndex]);

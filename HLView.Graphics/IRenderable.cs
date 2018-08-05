@@ -6,7 +6,8 @@ namespace HLView.Graphics
 {
     public interface IRenderable : IUpdateable
     {
-        int RenderPass { get; }
+        int Order { get; }
+        string Pipeline { get; }
         float DistanceFrom(Vector3 location);
         void CreateResources(SceneContext sc);
         void Render(SceneContext sc, CommandList cl, IRenderContext rc);

@@ -18,7 +18,8 @@ namespace HLView.Graphics.Renderables
         private readonly List<IRenderable> _children;
         private Vector4 _colour;
 
-        public int RenderPass => 10;
+        public int Order => 10;
+        public string Pipeline => "Lightmapped";
 
         public BspEntityRenderable(BspFile bsp, Environment env, EntityData entity, Model model)
         {

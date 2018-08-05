@@ -24,8 +24,7 @@ namespace HLView.Graphics.Renderables
             RenderLists(sc, cl);
         }
 
-        public override void RenderAlpha(SceneContext sc, CommandList cl, IRenderContext rc,
-            Vector3 cameraLocation)
+        public override void RenderAlpha(SceneContext sc, CommandList cl, IRenderContext rc, Vector3 cameraLocation)
         {
             // 
         }

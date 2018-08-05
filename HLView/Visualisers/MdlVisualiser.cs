@@ -1,6 +1,8 @@
 ﻿using System.IO;
+using System.Numerics;
 using System.Windows.Forms;
 using HLView.Formats.Bsp;
+using HLView.Formats.Mdl;
 using HLView.Graphics;
 using HLView.Graphics.Renderables;
 using Veldrid;
@@ -8,7 +10,7 @@ using Environment = HLView.Formats.Environment.Environment;
 
 namespace HLView.Visualisers
 {
-    public class BspVisualiser : IVisualiser
+    public class MdlVisualiser : IVisualiser
     {
         private readonly Panel _panel;
         private GraphicsDevice _graphicsDevice;
@@ -18,14 +20,14 @@ namespace HLView.Visualisers
 
         public Control Container => _panel;
         
-        public BspVisualiser()
+        public MdlVisualiser()
         {
             _panel = new Panel();
         }
 
         public bool Supports(string path)
         {
-            return Path.GetExtension(path) == ".bsp";
+            return Path.GetExtension(path) == ".mdl";
         }
 
         public void Open(Environment environment, string path)
@@ -46,18 +48,17 @@ namespace HLView.Visualisers
             };
             _panel.Controls.Add(_view);
 
+            var pc = (PerspectiveCamera) _view.Camera;
+            pc.Position = -Vector3.UnitY * 20 + Vector3.UnitZ * 2;
+            pc.LookAt = Vector3.Zero;
+
             _sc = new SceneContext(_graphicsDevice);
             _sc.AddRenderTarget(_view);
 
             _scene = new Scene();
 
-            BspFile bsp;
-            using (var stream = File.OpenRead(path))
-            {
-                bsp = new BspFile(stream);
-            }
-
-            _scene.AddRenderableSource(new BspRenderable(bsp, environment));
+            var mdl = MdlFile.FromFile(path);
+            _scene.AddRenderable(new MdlRenderable(mdl, Vector3.Zero));
             _sc.Scene = _scene;
             _sc.Start();
         }

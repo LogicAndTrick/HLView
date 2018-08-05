@@ -208,11 +208,16 @@
   <ItemGroup>
     <Compile Include="ICamera.cs" />
     <Compile Include="Class1.cs" />
+    <Compile Include="IRenderableSource.cs" />
     <Compile Include="IRenderContext.cs" />
+    <Compile Include="Pipelines\IRenderPipeline.cs" />
     <Compile Include="IRenderTarget.cs" />
     <Compile Include="IUpdateable.cs" />
     <Compile Include="KeyboardState.cs" />
+    <Compile Include="Pipelines\ModelRenderPipeline.cs" />
+    <Compile Include="Pipelines\LightmappedRenderPipeline.cs" />
     <Compile Include="PerspectiveCamera.cs" />
+    <Compile Include="Primitives\ModelVertex.cs" />
     <Compile Include="Primitives\UniformProjection.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="IRenderable.cs" />
@@ -221,6 +226,7 @@
     <Compile Include="Renderables\BspFaceGroupRenderable.cs" />
     <Compile Include="Renderables\BspRenderable.cs" />
     <Compile Include="Renderables\BspStaticFaceGroupRenderable.cs" />
+    <Compile Include="Renderables\MdlRenderable.cs" />
     <Compile Include="Renderables\SkyboxRenderable.cs" />
     <Compile Include="RenderTarget.cs" />
     <Compile Include="ResourceCache.cs" />
@@ -228,17 +234,20 @@
     <Compile Include="SceneContext.cs" />
     <Compile Include="ShaderHelper.cs" />
     <Compile Include="Primitives\Vertex.cs" />
+    <Compile Include="Pipelines\SkyboxRenderPipeline.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="app.config" />
     <None Include="packages.config">
       <SubType>Designer</SubType>
     </None>
+    <Content Include="Shaders\model.frag.hlsl" />
     <Content Include="Shaders\main.frag.hlsl.bytes">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
+    <Content Include="Shaders\model.vert.hlsl" />
     <Content Include="Shaders\main.vert.hlsl.bytes">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
     <None Include="Shaders\main.vk.frag" />
     <Content Include="Shaders\main.vk.frag.spv">
@@ -248,6 +257,12 @@
     <Content Include="Shaders\main.vk.vert.spv">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
+    <None Include="Shaders\model.frag.hlsl.bytes">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="Shaders\model.vert.hlsl.bytes">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <Content Include="Shaders\main.frag.hlsl" />

@@ -25,7 +25,8 @@ namespace HLView.Graphics.Renderables
 
         private ResourceSet[] _textureResources;
 
-        public int RenderPass => 0;
+        public int Order => 0;
+        public string Pipeline => "Skybox";
 
         public SkyboxRenderable(Environment env, string skyboxName)
         {
@@ -156,9 +157,6 @@ namespace HLView.Graphics.Renderables
 
         public void Render(SceneContext sc, CommandList cl, IRenderContext rc)
         {
-            // Move the camera to the origin
-            rc.SetModelMatrix(Matrix4x4.CreateTranslation(rc.Camera.Location));
-
             // Render
             cl.SetVertexBuffer(0, _vertexBuffer);
             cl.SetIndexBuffer(_indexBuffer, IndexFormat.UInt32);
@@ -168,10 +166,6 @@ namespace HLView.Graphics.Renderables
                 cl.SetGraphicsResourceSet(1, _textureResources[i]);
                 cl.DrawIndexed(6, 1, 0, i * 4, 0);
             }
-
-            // Clear the depth buffer - skybox is always as far away as possible
-            cl.ClearDepthStencil(1);
-            rc.ClearModelMatrix();
         }
 
         public void RenderAlpha(SceneContext sc, CommandList cl, IRenderContext rc, Vector3 cameraLocation)

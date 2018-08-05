@@ -1,23 +1,21 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Numerics;
-using System.Text;
-using System.Threading.Tasks;
 using HLView.Formats.Bsp;
-using Veldrid;
 using Environment = HLView.Formats.Environment.Environment;
 
 namespace HLView.Graphics.Renderables
 {
-    public class BspRenderable : IRenderable
+    public class BspRenderable : IRenderableSource
     {
         private readonly BspFile _bsp;
         private readonly Environment _env;
         private readonly List<IRenderable> _children;
 
-        public int RenderPass => 1;
+        public int Order => 1;
+        public string Pipeline => "Lightmapped";
 
         public BspRenderable(BspFile bsp, Environment env)
         {
@@ -81,52 +79,14 @@ namespace HLView.Graphics.Renderables
             }
         }
 
-        public void Update(long milliseconds)
+        IEnumerator IEnumerable.GetEnumerator()
         {
-            foreach (var child in _children)
-            {
-                child.Update(milliseconds);
-            }
+            return GetEnumerator();
         }
 
-        public float DistanceFrom(Vector3 location)
+        public IEnumerator<IRenderable> GetEnumerator()
         {
-            if (!_children.Any()) return 0;
-            return _children.Select(x => x.DistanceFrom(location)).Max();
-        }
-
-        public void CreateResources(SceneContext sc)
-        {
-            foreach (var child in _children)
-            {
-                child.CreateResources(sc);
-            }
-        }
-
-        public void Render(SceneContext sc, CommandList cl, IRenderContext rc)
-        {
-            foreach (var child in _children.OrderBy(x => x.RenderPass))
-            {
-                child.Render(sc, cl, rc);
-            }
-        }
-
-        public void RenderAlpha(SceneContext sc, CommandList cl, IRenderContext rc, Vector3 cameraLocation)
-        {
-            foreach (var child in _children.OrderBy(x => x.RenderPass).ThenByDescending(x => x.DistanceFrom(cameraLocation)))
-            {
-                child.RenderAlpha(sc, cl, rc, cameraLocation);
-            }
-        }
-
-        public void DisposeResources(SceneContext sc)
-        {
-            foreach (var child in _children)
-            {
-                child.DisposeResources(sc);
-            }
-
-            _children.Clear();
+            return _children.GetEnumerator();
         }
     }
 }

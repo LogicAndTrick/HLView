@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
+using HLView.Graphics.Renderables;
 using Veldrid;
 
 namespace HLView.Graphics
@@ -24,6 +25,13 @@ namespace HLView.Graphics
             _newRenderables.Add(renderable);
         }
 
+        public void AddRenderableSource(IRenderableSource source)
+        {
+            var rend = source.ToList();
+            _renderables.AddRange(rend);
+            _newRenderables.AddRange(rend);
+        }
+
         public void AddUpdateable(IUpdateable updateable)
         {
             _updateables.Add(updateable);
@@ -43,17 +51,25 @@ namespace HLView.Graphics
             }
             _newRenderables.Clear();
 
-            foreach (var renderable in _renderables.OrderBy(x => x.RenderPass))
+            foreach (var rp in sc.Pipelines.OrderBy(x => x.Order))
             {
-                renderable.Render(sc, cl, rc);
+                rp.SetPipeline(cl, sc, rc);
+                foreach (var renderable in _renderables.Where(x => x.Pipeline == rp.Name).OrderBy(x => x.Order))
+                {
+                    renderable.Render(sc, cl, rc);
+                }
             }
         }
 
         public void RenderAlpha(CommandList cl, SceneContext sc, IRenderContext rc, Vector3 cameraLocation)
         {
-            foreach (var renderable in _renderables)
+            foreach (var rp in sc.Pipelines.OrderBy(x => x.Order))
             {
-                renderable.RenderAlpha(sc, cl, rc, cameraLocation);
+                rp.SetPipeline(cl, sc, rc);
+                foreach (var renderable in _renderables.Where(x => x.Pipeline == rp.Name).OrderBy(x => x.Order))
+                {
+                    renderable.RenderAlpha(sc, cl, rc, cameraLocation);
+                }
             }
         }
 

@@ -39,6 +39,11 @@ namespace HLView
         private void Viewer_Load(object sender, EventArgs e)
         {
             // 
+
+            //OpenFile(@"F:\Steam\SteamApps\common\Half-Life\valve\models\light.mdl", true);
+            OpenFile(@"F:\Steam\SteamApps\common\Half-Life\valve\models\boid.mdl", true);
+            //OpenFile(@"F:\Steam\SteamApps\common\Half-Life\valve\models\hgrunt.mdl", true);
+            //OpenFile(@"F:\Steam\SteamApps\common\Half-Life\valve\maps\c1a0.bsp", true);
         }
 
         private void Viewer_FormClosing(object sender, FormClosingEventArgs e)

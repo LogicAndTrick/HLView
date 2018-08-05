@@ -3,11 +3,8 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading;
+using HLView.Graphics.Pipelines;
 using Veldrid;
-
-namespace HLView.Graphics.Primitives
-{
-}
 
 namespace HLView.Graphics
 {
@@ -26,6 +23,8 @@ namespace HLView.Graphics
             }
         }
 
+        public IReadOnlyCollection<IRenderPipeline> Pipelines => _pipelines;
+
         private readonly Thread _renderThread;
         private readonly CancellationTokenSource _token;
 
@@ -34,7 +33,7 @@ namespace HLView.Graphics
         private Scene _scene;
         private readonly object _lock = new object();
 
-        public Pipeline Pipeline { get; private set; }
+        private readonly List<IRenderPipeline> _pipelines;
 
         public SceneContext(GraphicsDevice graphicsDevice)
         {
@@ -45,38 +44,19 @@ namespace HLView.Graphics
             _renderTargets = new List<RenderTarget>();
             _timer = new Stopwatch();
 
-            InitialisePipeline();
+            _pipelines = new List<IRenderPipeline>();
+            AddPipeline(new SkyboxRenderPipeline());
+            AddPipeline(new LightmappedRenderPipeline());
+            AddPipeline(new ModelRenderPipeline());
         }
 
-        private void InitialisePipeline()
+        public void AddPipeline(IRenderPipeline pipeline)
         {
-            var vertexLayout = new VertexLayoutDescription(
-                new VertexElementDescription("vPosition", VertexElementSemantic.Position, VertexElementFormat.Float3),
-                new VertexElementDescription("vNormal", VertexElementSemantic.Normal, VertexElementFormat.Float3),
-                new VertexElementDescription("vColour", VertexElementSemantic.Color, VertexElementFormat.Float4),
-                new VertexElementDescription("vTexture", VertexElementSemantic.TextureCoordinate, VertexElementFormat.Float2),
-                new VertexElementDescription("vLightmap", VertexElementSemantic.TextureCoordinate, VertexElementFormat.Float2)
-            );
-
-            var (vertex, fragment) = ResourceCache.GetShaders("main");
-
-            var pDesc = new GraphicsPipelineDescription
+            pipeline.CreateResources(this);
+            lock (_lock)
             {
-                BlendState = BlendStateDescription.SingleAlphaBlend,
-                DepthStencilState = DepthStencilStateDescription.DepthOnlyLessEqual,
-                RasterizerState = new RasterizerStateDescription(FaceCullMode.Back, PolygonFillMode.Solid, FrontFace.Clockwise, true, false),
-                PrimitiveTopology = PrimitiveTopology.TriangleList,
-                ResourceLayouts = new[] { ResourceCache.ProjectionLayout, ResourceCache.TextureLayout },
-                ShaderSet = new ShaderSetDescription(new[] { vertexLayout }, new[] { vertex, fragment }),
-                Outputs = new OutputDescription
-                {
-                    ColorAttachments = new[] { new OutputAttachmentDescription(PixelFormat.B8_G8_R8_A8_UNorm) },
-                    DepthAttachment = new OutputAttachmentDescription(PixelFormat.R32_Float),
-                    SampleCount = TextureSampleCount.Count1
-                }
-            };
-
-            Pipeline = ResourceCache.GetPipeline(ref pDesc);
+                _pipelines.Add(pipeline);
+            }
         }
 
         public void AddRenderTarget(IRenderTarget target)
@@ -154,6 +134,8 @@ namespace HLView.Graphics
         public void Dispose()
         {
             _scene.DisposeResources(this);
+            _pipelines.ForEach(x => x.DisposeResources(this));
+
             _token.Cancel();
             _renderThread.Join(100);
             _renderThread.Abort();

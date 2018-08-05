@@ -218,6 +218,7 @@
     </Compile>
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Visualisers\MdlVisualiser.cs" />
     <Compile Include="Visualisers\BspVisualiser.cs" />
     <Compile Include="Visualisers\IVisualiser.cs" />
     <EmbeddedResource Include="Properties\Resources.resx">

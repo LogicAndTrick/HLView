@@ -17,10 +17,7 @@ namespace Sandbox
         static void Main(string[] args)
         {
             var file = @"F:\Steam\SteamApps\common\Half-Life\valve\models\hgrunt.mdl";
-            using (var stream = File.OpenRead(file))
-            {
-                var mdl = new MdlFile(stream);
-            }
+            var mdl = MdlFile.FromFile(file);
         }
     }
 }

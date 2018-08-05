@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Numerics;
 using System.Text;
 
@@ -19,7 +20,7 @@ namespace HLView.Formats.Mdl
         public List<BodyPart> BodyParts { get; set; }
         public List<Attachment> Attachments { get; set; }
 
-        public MdlFile(Stream stream)
+        public MdlFile(IEnumerable<Stream> streams)
         {
             Bones = new List<Bone>();
             BoneControllers = new List<BoneController>();
@@ -30,15 +31,89 @@ namespace HLView.Formats.Mdl
             Skins = new List<SkinFamily>();
             BodyParts = new List<BodyPart>();
             Attachments = new List<Attachment>();
-            using (var br = new BinaryReader(stream, Encoding.ASCII)) Read(br);
+
+            var readers = streams.Select(x => new BinaryReader(x, Encoding.ASCII)).ToList();
+            try
+            {
+                Read(readers);
+            }
+            finally
+            {
+                readers.ForEach(x => x.Dispose());
+            }
         }
 
-        private void Read(BinaryReader br)
+        public static MdlFile FromFile(string filename)
+        {
+            var dir = Path.GetDirectoryName(filename);
+            var fname = Path.GetFileNameWithoutExtension(filename);
+
+            var streams = new List<Stream>();
+            try
+            {
+                streams.Add(File.OpenRead(filename));
+                var tfile = Path.Combine(dir, fname + "t.mdl");
+                if (File.Exists(tfile)) streams.Add(File.OpenRead(tfile));
+                for (var i = 1; i < 32; i++)
+                {
+                    var sfile = Path.Combine(dir, fname + i.ToString("00") + ".mdl");
+                    if (File.Exists(sfile)) streams.Add(File.OpenRead(sfile));
+                    else break;
+                }
+
+                return new MdlFile(streams);
+            }
+            finally
+            {
+                foreach (var s in streams) s.Dispose();
+            }
+        }
+
+        private void Read(IEnumerable<BinaryReader> readers)
+        {
+            var main = new List<BinaryReader>();
+            var sequenceGroups = new Dictionary<string, BinaryReader>();
+
+            foreach (var br in readers)
+            {
+                var id = (ID)br.ReadInt32();
+                var version = (Version)br.ReadInt32();
+
+                if (version != Version.Goldsource)
+                {
+                    throw new NotSupportedException("Only Goldsource (v10) MDL files are supported.");
+                }
+
+                if (id != ID.Idsq && id != ID.Idst)
+                {
+                    throw new NotSupportedException("Only Goldsource (v10) MDL files are supported.");
+                }
+
+                if (id == ID.Idst)
+                {
+                    main.Add(br);
+                }
+                else
+                {
+                    var name = br.ReadFixedLengthString(64);
+                    sequenceGroups[name] = br;
+                }
+            }
+
+            foreach (var br in main)
+            {
+                Read(br, sequenceGroups);
+            }
+        }
+
+        #region Reading
+        
+        private void Read(BinaryReader br, Dictionary<string, BinaryReader> sequenceGroups)
         {
             Header = new Header
             {
-                ID = (ID) br.ReadInt32(),
-                Version = (Version) br.ReadInt32(),
+                ID = ID.Idst,
+                Version = Version.Goldsource,
                 Name = br.ReadFixedLengthString(64),
                 Size = br.ReadInt32(),
                 EyePosition = br.ReadVector3(),
@@ -48,16 +123,6 @@ namespace HLView.Formats.Mdl
                 BoundingBoxMax = br.ReadVector3(),
                 Flags = br.ReadInt32()
             };
-
-            if (Header.ID != ID.Idsq && Header.ID != ID.Idst)
-            {
-                throw new NotSupportedException("Only Goldsource (v10) MDL files are supported.");
-            }
-
-            if (Header.Version != Version.Goldsource)
-            {
-                throw new NotSupportedException("Only Goldsource (v10) MDL files are supported.");
-            }
 
             // Read all the nums/offsets from the header
             var sections = new int[(int)Section.NumSections][];
@@ -78,6 +143,7 @@ namespace HLView.Formats.Mdl
 
             // Bones
             var num = SeekToSection(br, Section.Bone, sections);
+            var numBones = num;
             for (var i = 0; i < num; i++)
             {
                 var bone = new Bone
@@ -124,6 +190,19 @@ namespace HLView.Formats.Mdl
                 Hitboxes.Add(hitbox);
             }
 
+            // Sequence groups
+            num = SeekToSection(br, Section.SequenceGroup, sections);
+            for (var i = 0; i < num; i++)
+            {
+                var group = new SequenceGroup
+                {
+                    Label = br.ReadFixedLengthString(32),
+                    Name = br.ReadFixedLengthString(64)
+                };
+                br.ReadBytes(8); // unused
+                SequenceGroups.Add(group);
+            }
+
             // Sequences
             num = SeekToSection(br, Section.Sequence, sections);
             for (var i = 0; i < num; i++)
@@ -160,28 +239,22 @@ namespace HLView.Formats.Mdl
                     NextSequence = br.ReadInt32()
                 };
 
+                var seqGroup = SequenceGroups[sequence.SequenceGroup];
+
                 // Only load seqence group 0 for now (others are in other files)
                 if (sequence.SequenceGroup == 0)
                 {
                     var pos = br.BaseStream.Position;
-                    sequence.Blends = LoadAnimationBlends(br, sequence);
+                    sequence.Blends = LoadAnimationBlends(br, sequence, numBones);
                     br.BaseStream.Position = pos;
+                }
+                else if (sequenceGroups.ContainsKey(seqGroup.Name))
+                {
+                    var reader = sequenceGroups[seqGroup.Name];
+                    sequence.Blends = LoadAnimationBlends(reader, sequence, numBones);
                 }
 
                 Sequences.Add(sequence);
-            }
-
-            // Sequence groups
-            num = SeekToSection(br, Section.SequenceGroup, sections);
-            for (var i = 0; i < num; i++)
-            {
-                var group = new SequenceGroup
-                {
-                    Label = br.ReadFixedLengthString(32),
-                    Name = br.ReadFixedLengthString(64)
-                };
-                br.ReadBytes(8); // unused
-                SequenceGroups.Add(group);
             }
 
             // Textures
@@ -246,7 +319,7 @@ namespace HLView.Formats.Mdl
             {
                 var attachment = new Attachment
                 {
-                    Name = br.ReadFixedLengthString(64),
+                    Name = br.ReadFixedLengthString(32),
                     Type = br.ReadInt32(),
                     Bone = br.ReadInt32(),
                     Origin = br.ReadVector3(),
@@ -260,19 +333,21 @@ namespace HLView.Formats.Mdl
             // Sounds & Sound groups aren't used
         }
 
-        private int SeekToSection(BinaryReader br, Section section, int[][] sections)
+        private static int SeekToSection(BinaryReader br, Section section, int[][] sections)
         {
             var s = sections[(int)section];
             br.BaseStream.Seek(s[1], SeekOrigin.Begin);
             return s[0];
         }
 
+        #endregion
+
         #region Animations
 
-        private Blend[] LoadAnimationBlends(BinaryReader br, Sequence sequence)
+        private static Blend[] LoadAnimationBlends(BinaryReader br, Sequence sequence, int numBones)
         {
             var blends = new Blend[sequence.NumBlends];
-            var blendLength = 6 * Bones.Count;
+            var blendLength = 6 * numBones;
 
             br.BaseStream.Seek(sequence.AnimationIndex, SeekOrigin.Begin);
 
@@ -284,22 +359,22 @@ namespace HLView.Formats.Mdl
                 Array.Copy(offsets, blendLength * i, blendOffsets, 0, blendLength);
 
                 var startPosition = animPosition + i * blendLength;
-                blends[i].Frames = LoadAnimationFrames(br, sequence, startPosition, blendOffsets);
+                blends[i].Frames = LoadAnimationFrames(br, sequence, numBones, startPosition, blendOffsets);
             }
 
             return blends;
         }
 
-        private AnimationFrame[] LoadAnimationFrames(BinaryReader br, Sequence sequence, long startPosition, ushort[] boneOffsets)
+        private static AnimationFrame[] LoadAnimationFrames(BinaryReader br, Sequence sequence, int numBones, long startPosition, ushort[] boneOffsets)
         {
             var frames = new AnimationFrame[sequence.NumFrames];
             for (var i = 0; i < frames.Length; i++)
             {
-                frames[i].Positions = new Vector3[Bones.Count];
-                frames[i].Rotations = new Vector3[Bones.Count];
+                frames[i].Positions = new Vector3[numBones];
+                frames[i].Rotations = new Vector3[numBones];
             }
             
-            for (var i = 0; i < Bones.Count; i++)
+            for (var i = 0; i < numBones; i++)
             {
                 var boneValues = new short[6][];
                 for (var j = 0; j < 6; j++)
@@ -353,7 +428,7 @@ namespace HLView.Formats.Mdl
 
         #region Models
 
-        private Model[] LoadModels(BinaryReader br, BodyPart part)
+        private static Model[] LoadModels(BinaryReader br, BodyPart part)
         {
             br.BaseStream.Seek(part.ModelIndex, SeekOrigin.Begin);
 
@@ -387,7 +462,7 @@ namespace HLView.Formats.Mdl
             return models;
         }
 
-        private Mesh[] ReadMeshes(BinaryReader br, Model model)
+        private static Mesh[] ReadMeshes(BinaryReader br, Model model)
         {
             var meshes = new Mesh[model.NumMesh];
 
@@ -428,7 +503,7 @@ namespace HLView.Formats.Mdl
             return meshes;
         }
 
-        private MeshVertex[] ReadTriangles(BinaryReader br, Mesh mesh, Vector3[] vertices, byte[] vertexBones, Vector3[] normals, byte[] normalBones)
+        private static MeshVertex[] ReadTriangles(BinaryReader br, Mesh mesh, Vector3[] vertices, byte[] vertexBones, Vector3[] normals, byte[] normalBones)
         {
             /*
              * Mesh data

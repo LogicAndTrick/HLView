@@ -41,6 +41,9 @@ FragmentIn main(VertexIn input)
     position = mul(position, bone);
     normal = mul(normal, bone);
 
+    //position.xyz = float3(-position.z, -position.y, -position.x);
+    //normal.xyz = float3(-normal.z, -normal.y, -normal.x);
+
     float4 modelPos = mul(position, tModel);
     float4 cameraPos = mul(modelPos, tView);
     float4 viewportPos = mul(cameraPos, tProjection);

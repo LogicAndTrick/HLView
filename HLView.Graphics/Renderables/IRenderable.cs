@@ -1,8 +1,7 @@
-﻿using System;
-using System.Numerics;
+﻿using System.Numerics;
 using Veldrid;
 
-namespace HLView.Graphics
+namespace HLView.Graphics.Renderables
 {
     public interface IRenderable : IUpdateable
     {

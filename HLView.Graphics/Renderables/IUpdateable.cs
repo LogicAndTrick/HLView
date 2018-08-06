@@ -1,4 +1,4 @@
-﻿namespace HLView.Graphics
+﻿namespace HLView.Graphics.Renderables
 {
     public interface IUpdateable
     {

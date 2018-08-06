@@ -2,6 +2,7 @@
 using System.Diagnostics;
 using System.Windows.Forms;
 using HLView.Graphics;
+using HLView.Graphics.Cameras;
 using Veldrid;
 
 namespace HLView
@@ -12,7 +13,7 @@ namespace HLView
 
         public Swapchain Swapchain { get; }
 
-        public ICamera Camera { get; }
+        public ICamera Camera { get; set; }
 
         public VeldridControl(GraphicsDevice graphics, GraphicsDeviceOptions options)
         {

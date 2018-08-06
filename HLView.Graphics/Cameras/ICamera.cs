@@ -1,7 +1,7 @@
 ﻿using System.Numerics;
-using System.Runtime.InteropServices;
+using HLView.Graphics.Renderables;
 
-namespace HLView.Graphics
+namespace HLView.Graphics.Cameras
 {
     public interface ICamera : IUpdateable
     {

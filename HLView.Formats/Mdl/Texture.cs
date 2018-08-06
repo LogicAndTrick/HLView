@@ -3,7 +3,7 @@
     public struct Texture
     {
         public string Name;
-        public int Flags;
+        public TextureFlags Flags;
         public int Width;
         public int Height;
         public int Index;

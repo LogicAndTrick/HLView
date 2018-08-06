@@ -41,7 +41,7 @@ namespace HLView
             // 
 
             //OpenFile(@"F:\Steam\SteamApps\common\Half-Life\valve\models\light.mdl", true);
-            OpenFile(@"F:\Steam\SteamApps\common\Half-Life\valve\models\boid.mdl", true);
+            OpenFile(@"F:\Steam\SteamApps\common\Half-Life\valve\models\fungus.mdl", true);
             //OpenFile(@"F:\Steam\SteamApps\common\Half-Life\valve\models\hgrunt.mdl", true);
             //OpenFile(@"F:\Steam\SteamApps\common\Half-Life\valve\maps\c1a0.bsp", true);
         }

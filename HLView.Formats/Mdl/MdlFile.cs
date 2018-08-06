@@ -264,7 +264,7 @@ namespace HLView.Formats.Mdl
                 var texture = new Texture
                 {
                     Name = br.ReadFixedLengthString(64),
-                    Flags = br.ReadInt32(),
+                    Flags = (TextureFlags) br.ReadInt32(),
                     Width = br.ReadInt32(),
                     Height = br.ReadInt32(),
                     Index = br.ReadInt32()
@@ -358,7 +358,7 @@ namespace HLView.Formats.Mdl
                 var blendOffsets = new ushort[blendLength];
                 Array.Copy(offsets, blendLength * i, blendOffsets, 0, blendLength);
 
-                var startPosition = animPosition + i * blendLength;
+                var startPosition = animPosition + i * blendLength * 2;
                 blends[i].Frames = LoadAnimationFrames(br, sequence, numBones, startPosition, blendOffsets);
             }
 

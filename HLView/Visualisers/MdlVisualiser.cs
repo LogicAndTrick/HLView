@@ -1,9 +1,11 @@
-﻿using System.IO;
+﻿using System;
+using System.IO;
 using System.Numerics;
 using System.Windows.Forms;
 using HLView.Formats.Bsp;
 using HLView.Formats.Mdl;
 using HLView.Graphics;
+using HLView.Graphics.Cameras;
 using HLView.Graphics.Renderables;
 using Veldrid;
 using Environment = HLView.Formats.Environment.Environment;
@@ -44,13 +46,11 @@ namespace HLView.Visualisers
 
             _view = new VeldridControl(_graphicsDevice, options)
             {
-                Dock = DockStyle.Fill
+                Dock = DockStyle.Fill,
             };
             _panel.Controls.Add(_view);
-
-            var pc = (PerspectiveCamera) _view.Camera;
-            pc.Position = -Vector3.UnitY * 20 + Vector3.UnitZ * 2;
-            pc.LookAt = Vector3.Zero;
+            var rcam = new RotationCamera(_view.Width, _view.Height);
+            _view.Camera = rcam;
 
             _sc = new SceneContext(_graphicsDevice);
             _sc.AddRenderTarget(_view);
@@ -58,9 +58,27 @@ namespace HLView.Visualisers
             _scene = new Scene();
 
             var mdl = MdlFile.FromFile(path);
+
+            var (min, max) = GetBbox(mdl);
+            rcam.SetBoundingBox(min, max);
+
             _scene.AddRenderable(new MdlRenderable(mdl, Vector3.Zero));
             _sc.Scene = _scene;
             _sc.Start();
+        }
+
+        private (Vector3, Vector3) GetBbox(MdlFile mdl)
+        {
+            var min = Vector3.One * float.MaxValue;
+            var max = Vector3.One * float.MinValue;
+
+            foreach (var s in mdl.Sequences)
+            {
+                min = Vector3.Min(s.Min, min);
+                max = Vector3.Max(s.Max, max);
+            }
+
+            return (min, max);
         }
 
         public void Close()

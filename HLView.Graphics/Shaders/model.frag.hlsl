@@ -12,9 +12,8 @@ SamplerState uSampler;
 
 float4 main(FragmentIn input) : SV_Target0
 {
-    //float4 tex = uTexture.Sample(uSampler, input.fTexture);
-    //if (tex.a < 0.05) discard;
+    float4 tex = uTexture.Sample(uSampler, input.fTexture);
+    if (tex.a < 0.05) discard;
 
-    //return tex;
-    return input.fNormal;
+    return tex;
 }

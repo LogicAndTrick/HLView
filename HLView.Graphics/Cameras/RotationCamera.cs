@@ -1,9 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Numerics;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace HLView.Graphics.Cameras
@@ -18,8 +14,8 @@ namespace HLView.Graphics.Cameras
         private int _height;
         private Vector2 _previousMousePos;
 
-        private int _fov;
-        private int _clipDistance;
+        private readonly int _fov;
+        private readonly int _clipDistance;
 
         public Matrix4x4 View => GetCameraMatrix();
         public Matrix4x4 Projection => GetViewportMatrix(_width, _height);
@@ -27,7 +23,9 @@ namespace HLView.Graphics.Cameras
 
         public RotationCamera(int width, int height)
         {
-            _origin = Vector3.Zero;
+            _origin = new Vector3(0, 0, 64);
+            _distance = 64;
+            _angles = new Vector3(0, 0, -(float)Math.PI / 2);
 
             _fov = 90;
             _clipDistance = 10000;
@@ -42,8 +40,6 @@ namespace HLView.Graphics.Cameras
 
             var size = max - min;
             _distance = Math.Max(size.X, Math.Max(size.Y, size.Z));
-
-            _angles = Vector3.Zero;
         }
 
         public void Update(long milliseconds)

@@ -228,6 +228,8 @@
     <Compile Include="Renderables\BspRenderable.cs" />
     <Compile Include="Renderables\BspStaticFaceGroupRenderable.cs" />
     <Compile Include="Renderables\MdlRenderable.cs" />
+    <Compile Include="Renderables\ModelRenderFlags.cs" />
+    <Compile Include="Renderables\ModelRenderSettings.cs" />
     <Compile Include="Renderables\SkyboxRenderable.cs" />
     <Compile Include="RenderTarget.cs" />
     <Compile Include="ResourceCache.cs" />
@@ -244,12 +246,17 @@
     </None>
     <Content Include="Shaders\model.frag.hlsl" />
     <Content Include="Shaders\main.frag.hlsl.bytes">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="Shaders\model.vert.hlsl" />
     <Content Include="Shaders\main.vert.hlsl.bytes">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
+    <None Include="Shaders\model.vk.frag" />
+    <None Include="Shaders\model.vk.frag.spv">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="Shaders\model.vk.vert" />
     <None Include="Shaders\main.vk.frag" />
     <Content Include="Shaders\main.vk.frag.spv">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
@@ -259,10 +266,13 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <None Include="Shaders\model.frag.hlsl.bytes">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <None Include="Shaders\model.vert.hlsl.bytes">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="Shaders\model.vk.vert.spv">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
   </ItemGroup>
   <ItemGroup>

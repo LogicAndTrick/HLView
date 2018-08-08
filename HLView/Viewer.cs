@@ -41,9 +41,9 @@ namespace HLView
             // 
 
             //OpenFile(@"F:\Steam\SteamApps\common\Half-Life\valve\models\light.mdl", true);
-            OpenFile(@"F:\Steam\SteamApps\common\Half-Life\valve\models\fungus.mdl", true);
+            //OpenFile(@"F:\Steam\SteamApps\common\Half-Life\valve\models\fungus.mdl", true);
             //OpenFile(@"F:\Steam\SteamApps\common\Half-Life\valve\models\hgrunt.mdl", true);
-            //OpenFile(@"F:\Steam\SteamApps\common\Half-Life\valve\maps\c1a0.bsp", true);
+            OpenFile(@"F:\Steam\SteamApps\common\Half-Life\valve\maps\c1a0.bsp", true);
         }
 
         private void Viewer_FormClosing(object sender, FormClosingEventArgs e)
@@ -150,7 +150,7 @@ namespace HLView
             if (vis == null) return;
 
             vis.Container.Dock = DockStyle.Fill;
-            Controls.Add(vis.Container);
+            VisualiserPanel.Controls.Add(vis.Container);
             vis.Open(_currentEnvironment, path);
             _currentVisualiser = vis;
         }
@@ -160,7 +160,7 @@ namespace HLView
             _currentFile = null;
             if (_currentVisualiser == null) return;
 
-            Controls.Remove(_currentVisualiser.Container);
+            VisualiserPanel.Controls.Remove(_currentVisualiser.Container);
             _currentVisualiser.Close();
             _currentVisualiser = null;
         }

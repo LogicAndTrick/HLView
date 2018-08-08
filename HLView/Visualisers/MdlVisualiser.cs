@@ -15,16 +15,25 @@ namespace HLView.Visualisers
     public class MdlVisualiser : IVisualiser
     {
         private readonly Panel _panel;
+        private readonly ModelVisualiserPanel _settingsPanel;
+
         private GraphicsDevice _graphicsDevice;
         private VeldridControl _view;
         private SceneContext _sc;
         private Scene _scene;
+        private MdlRenderable _renderable;
+        private MdlFile _mdl;
+        private RotationCamera _camera;
 
         public Control Container => _panel;
         
         public MdlVisualiser()
         {
             _panel = new Panel();
+            _settingsPanel = new ModelVisualiserPanel
+            {
+                Dock = DockStyle.Bottom
+            };
         }
 
         public bool Supports(string path)
@@ -49,36 +58,48 @@ namespace HLView.Visualisers
                 Dock = DockStyle.Fill,
             };
             _panel.Controls.Add(_view);
-            var rcam = new RotationCamera(_view.Width, _view.Height);
-            _view.Camera = rcam;
+            _panel.Controls.Add(_settingsPanel);
+
+            _camera = new RotationCamera(_view.Width, _view.Height);
+            _view.Camera = _camera;
 
             _sc = new SceneContext(_graphicsDevice);
             _sc.AddRenderTarget(_view);
 
             _scene = new Scene();
 
-            var mdl = MdlFile.FromFile(path);
+            _mdl = MdlFile.FromFile(path);
 
-            var (min, max) = GetBbox(mdl);
-            rcam.SetBoundingBox(min, max);
+            var (min, max) = GetBbox(_mdl, 0);
+            _camera.SetBoundingBox(min, max);
 
-            _scene.AddRenderable(new MdlRenderable(mdl, Vector3.Zero));
+            _renderable = new MdlRenderable(_mdl, Vector3.Zero);
+            _scene.AddRenderable(_renderable);
             _sc.Scene = _scene;
             _sc.Start();
+
+            _settingsPanel.SetModel(_mdl);
+            _settingsPanel.BodyPartModelSelected += BodyPartSelected;
+            _settingsPanel.SequenceSelected += SequenceSelected;
         }
 
-        private (Vector3, Vector3) GetBbox(MdlFile mdl)
+        private void BodyPartSelected(object sender, (int, int) e)
         {
-            var min = Vector3.One * float.MaxValue;
-            var max = Vector3.One * float.MinValue;
+            _renderable.RenderSettings.SetBodyPartModel(e.Item1, e.Item2);
+        }
 
-            foreach (var s in mdl.Sequences)
-            {
-                min = Vector3.Min(s.Min, min);
-                max = Vector3.Max(s.Max, max);
-            }
+        private void SequenceSelected(object sender, int e)
+        {
+            var (min, max) = GetBbox(_mdl, 0);
+            _camera.SetBoundingBox(min, max);
+            _renderable.RenderSettings.Sequence = e;
+        }
 
-            return (min, max);
+        private (Vector3, Vector3) GetBbox(MdlFile mdl, int sequence)
+        {
+            if (sequence < 0 || sequence >= mdl.Sequences.Count) return (Vector3.One * -64, Vector3.One * 64);
+            var seq = mdl.Sequences[sequence];
+            return (seq.Min, seq.Max);
         }
 
         public void Close()

@@ -34,6 +34,7 @@
             this.OpenMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.EnvironmentMenu = new System.Windows.Forms.ToolStripMenuItem();
             this.SelectEnvironmentMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.VisualiserPanel = new System.Windows.Forms.Panel();
             this.MenuStrip.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -86,11 +87,20 @@
             this.SelectEnvironmentMenuItem.Size = new System.Drawing.Size(114, 22);
             this.SelectEnvironmentMenuItem.Text = "Select...";
             // 
+            // VisualiserPanel
+            // 
+            this.VisualiserPanel.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.VisualiserPanel.Location = new System.Drawing.Point(268, 24);
+            this.VisualiserPanel.Name = "VisualiserPanel";
+            this.VisualiserPanel.Size = new System.Drawing.Size(734, 478);
+            this.VisualiserPanel.TabIndex = 2;
+            // 
             // Viewer
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(1002, 502);
+            this.Controls.Add(this.VisualiserPanel);
             this.Controls.Add(this.FileTree);
             this.Controls.Add(this.MenuStrip);
             this.MainMenuStrip = this.MenuStrip;
@@ -113,6 +123,7 @@
         private System.Windows.Forms.ToolStripMenuItem OpenMenuItem;
         private System.Windows.Forms.ToolStripMenuItem EnvironmentMenu;
         private System.Windows.Forms.ToolStripMenuItem SelectEnvironmentMenuItem;
+        private System.Windows.Forms.Panel VisualiserPanel;
     }
 }
 

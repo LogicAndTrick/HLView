@@ -4,8 +4,6 @@ using System.Drawing;
 using System.Linq;
 using System.Numerics;
 using System.Runtime.CompilerServices;
-using System.Text;
-using System.Threading.Tasks;
 using HLView.Formats.Mdl;
 using HLView.Graphics.Primitives;
 using Veldrid;
@@ -24,15 +22,22 @@ namespace HLView.Graphics.Renderables
         private DeviceBuffer _transformsBuffer;
         private ResourceSet _transformsResourceSet;
         private Matrix4x4[] _transforms;
+
         private ResourceSet _textureResource;
+
         private DeviceBuffer _vertexBuffer;
         private DeviceBuffer _indexBuffer;
-        private int[] _indicesPerTexture;
 
-        private int _currentSequence;
+        private DeviceBuffer _projectionBuffer;
+        private ResourceSet _projectionResourceSet;
+
+        private uint[][] _bodyPartIndices;
+
         private int _currentFrame;
         private long _lastFrameMillis;
         private float _interframePercent;
+
+        public ModelRenderSettings RenderSettings { get; }
 
         public MdlRenderable(MdlFile mdl, Vector3 origin)
         {
@@ -45,14 +50,18 @@ namespace HLView.Graphics.Renderables
                 _transforms[i] = Matrix4x4.Identity;
             }
 
-            _currentSequence = 0;
             _currentFrame = 0;
             _interframePercent = 0;
+
+            RenderSettings = new ModelRenderSettings(mdl);
         }
         
         public void Update(long milliseconds)
         {
-            var seq = _mdl.Sequences[_currentSequence];
+            var currentSequence = RenderSettings.Sequence;
+            if (currentSequence >= _mdl.Sequences.Count) return;
+
+            var seq = _mdl.Sequences[currentSequence];
             var targetFps = 1000 / seq.Framerate;
             var diff = milliseconds - _lastFrameMillis;
             
@@ -63,14 +72,14 @@ namespace HLView.Graphics.Renderables
             _currentFrame = (_currentFrame + skip) % seq.NumFrames;
             _lastFrameMillis = milliseconds;
 
-            CalculateFrame(_currentFrame, _interframePercent);
+            CalculateFrame(currentSequence, _currentFrame, _interframePercent);
         }
 
-        private void CalculateFrame(int currentFrame, float interFramePercent)
+        private void CalculateFrame(int currentSequence, int currentFrame, float interFramePercent)
         {
             _currentFrame = currentFrame;
 
-            var seq = _mdl.Sequences[_currentSequence];
+            var seq = _mdl.Sequences[currentSequence];
             var blend = seq.Blends[0];
             var cFrame = blend.Frames[currentFrame % seq.NumFrames];
             var nFrame = blend.Frames[(currentFrame + 1) % seq.NumFrames];
@@ -177,19 +186,24 @@ namespace HLView.Graphics.Renderables
             var texHeight = rectangles.Max(x => x.Bottom);
             var texWidth = rectangles.Max(x => x.Right);
 
+            _bodyPartIndices = new uint[_mdl.BodyParts.Count][];
+
             uint vi = 0;
             var skin = _mdl.Skins[0].Textures;
-            foreach (var part in _mdl.BodyParts)
+            for (var bpi = 0; bpi < _mdl.BodyParts.Count; bpi++)
             {
-                foreach (var model in part.Models)
+                var part = _mdl.BodyParts[bpi];
+                _bodyPartIndices[bpi] = new uint[part.Models.Length];
+
+                for (var mi = 0; mi < part.Models.Length; mi++)
                 {
+                    var model = part.Models[mi];
+                    _bodyPartIndices[bpi][mi] = (uint) model.Meshes.Sum(x => x.Vertices.Length);
+
                     foreach (var mesh in model.Meshes)
                     {
                         var texId = skin[mesh.SkinRef];
                         var rec = rectangles.Count > texId ? rectangles[texId] : Rectangle.Empty;
-                        var hoffset = rec.Top / (float) texHeight;
-                        var hscale = rec.Height / (float) texHeight;
-                        var wscale = rec.Width / (float) texWidth;
                         foreach (var x in mesh.Vertices)
                         {
                             vertices.Add(new ModelVertex
@@ -197,15 +211,16 @@ namespace HLView.Graphics.Renderables
                                 Position = x.Vertex,
                                 Normal = x.Normal,
                                 Texture = (x.Texture + new Vector2(rec.X, rec.Y)) / new Vector2(texWidth, texHeight),
-                                Bone = (uint)x.VertexBone
+                                Bone = (uint) x.VertexBone
                             });
-                            indices[texId].Add(vi++);
+                            indices[texId].Add(vi);
+                            vi++;
                         }
                     }
                 }
-            }
 
-            _indicesPerTexture = new int[_mdl.Textures.Count];
+            }
+            
 
             var flatIndices = new uint[vi];
             var currentIndexCount = 0;
@@ -214,7 +229,6 @@ namespace HLView.Graphics.Renderables
                 var num = kv.Value.Count;
                 Array.Copy(kv.Value.ToArray(), 0, flatIndices, currentIndexCount, num);
                 currentIndexCount += num;
-                _indicesPerTexture[kv.Key] = num;
             }
 
             var newVerts = vertices.ToArray();
@@ -232,10 +246,28 @@ namespace HLView.Graphics.Renderables
             _transformsResourceSet = sc.ResourceCache.GetResourceSet(
                 new ResourceSetDescription(sc.ResourceCache.ProjectionLayout, _transformsBuffer)
             );
+
+
+            _projectionBuffer = sc.Device.ResourceFactory.CreateBuffer(
+                new BufferDescription((uint)Unsafe.SizeOf<UniformProjection>(), BufferUsage.UniformBuffer)
+            );
+
+            _projectionResourceSet = sc.ResourceCache.GetResourceSet(
+                new ResourceSetDescription(sc.ResourceCache.ProjectionLayout, _projectionBuffer)
+            );
         }
 
         public void Render(SceneContext sc, CommandList cl, IRenderContext rc)
         {
+            sc.Device.UpdateBuffer(_projectionBuffer, 0, new UniformProjection
+            {
+                Model = Matrix4x4.CreateTranslation(_origin),
+                View = rc.Camera.View,
+                Projection = rc.Camera.Projection,
+            });
+            
+            cl.SetGraphicsResourceSet(0, _projectionResourceSet);
+
             cl.SetGraphicsResourceSet(1, _textureResource);
 
             sc.Device.UpdateBuffer(_transformsBuffer, 0, _transforms);
@@ -245,11 +277,19 @@ namespace HLView.Graphics.Renderables
             cl.SetIndexBuffer(_indexBuffer, IndexFormat.UInt32);
 
             uint ci = 0;
-            for (var i = 0; i < _indicesPerTexture.Length; i++)
+
+            for (var i = 0; i < _bodyPartIndices.Length; i++)
             {
-                //cl.SetGraphicsResourceSet(1, _textureResources[i]);
-                cl.DrawIndexed((uint) _indicesPerTexture[i], 1, ci, 0, 0);
-                ci += (uint) _indicesPerTexture[i];
+                var bpi = _bodyPartIndices[i];
+
+                var model = RenderSettings.GetBodyPartModel(i);
+                if (model >= bpi.Length) model = 0;
+
+                for (var j = 0; j < bpi.Length; j++)
+                {
+                    if (j == model) cl.DrawIndexed(bpi[j], 1, ci, 0, 0);
+                    ci += bpi[j];
+                }
             }
         }
 

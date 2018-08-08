@@ -116,5 +116,16 @@ namespace HLView.Formats.Environment
                 }
             }
         }
+
+        public string GetFile(string path)
+        {
+            var file = Path.Combine(ModFolder, path);
+            if (File.Exists(file)) return file;
+
+            file = Path.Combine(BaseFolder, path);
+            if (File.Exists(file)) return file;
+
+            return null;
+        }
     }
 }

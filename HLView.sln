@@ -1,20 +1,20 @@
-﻿
+
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
 VisualStudioVersion = 15.0.27703.2042
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HLView", "HLView\HLView.csproj", "{150BA205-30A0-4282-9CAC-2A2B016EBC6C}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "HLView", "HLView\HLView.csproj", "{150BA205-30A0-4282-9CAC-2A2B016EBC6C}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "HLView.Formats", "HLView.Formats\HLView.Formats.csproj", "{F23D1BF3-058D-459F-B21B-45FCFDBF8E80}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HLView.Graphics", "HLView.Graphics\HLView.Graphics.csproj", "{7537F8AB-D9D5-46E1-831E-074FA7739C4C}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "HLView.Graphics", "HLView.Graphics\HLView.Graphics.csproj", "{7537F8AB-D9D5-46E1-831E-074FA7739C4C}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{0C3C5E39-8F0F-4A1D-B048-F8E65673BE78}"
 	ProjectSection(SolutionItems) = preProject
 		Performance1.psess = Performance1.psess
 	EndProjectSection
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sandbox", "Sandbox\Sandbox.csproj", "{4FF9AF5C-4297-4579-83F1-DAD22825C573}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Sandbox", "Sandbox\Sandbox.csproj", "{4FF9AF5C-4297-4579-83F1-DAD22825C573}"
 EndProject
 Global
 	GlobalSection(Performance) = preSolution

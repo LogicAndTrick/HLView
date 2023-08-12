@@ -138,7 +138,7 @@ namespace HLView.Graphics
 
             _token.Cancel();
             _renderThread.Join(100);
-            _renderThread.Abort();
+            //_renderThread.Abort();
             ResourceCache.Dispose();
         }
     }

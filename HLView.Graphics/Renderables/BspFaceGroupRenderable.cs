@@ -214,7 +214,7 @@ namespace HLView.Graphics.Renderables
                 _currentRowHeight = 2;
             }
 
-            [DllImport("kernel32.dll", EntryPoint = "CopyMemory", SetLastError = false)]
+            [DllImport("kernel32.dll", EntryPoint = "RtlMoveMemory", SetLastError = false)]
             static extern void CopyMemory(IntPtr dest, IntPtr src, uint count);
 
             private void Expand()
